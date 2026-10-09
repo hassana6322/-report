@@ -1,0 +1,19 @@
+:root{
+--sp-0:0; /* @kind spacing */--sp-1:2px;--sp-2:4px;--sp-3:8px;--sp-4:12px;--sp-5:16px;
+--sp-6:20px;--sp-7:24px;--sp-8:32px;--sp-9:40px;--sp-10:48px;
+--sp-11:64px;--sp-12:80px;--sp-13:96px;
+
+/* Document / deck margins measured from the templates */
+--gutter-slide:68px;        /* deck left/right content edge */
+--gutter-slide-top:54px;    /* title chip top edge */
+--gutter-doc:20px;          /* certificate white plate inset */
+--doc-frame-inset:27px;     /* A4 invitation plate inset */
+--logo-clear-space:1.5cm; /* @kind spacing */   /* print minimum per guideline §05 */
+
+--control-h-sm:32px;
+--control-h-md:40px;
+--control-h-lg:48px;
+--field-pad-x:14px;
+--card-pad:20px;
+--card-pad-lg:28px;
+}

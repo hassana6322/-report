@@ -1,0 +1,94 @@
+:root{
+/* ---- Primary identity palette (guideline §08) ---- */
+--moe-navy:#15445a;      /* deep petrol — headings, dark surfaces */
+--moe-blue:#3d7eb9;      /* logo blue — start of the brand gradient */
+--moe-teal:#0da9a6;      /* logo teal — midpoint */
+--moe-green:#07a869;     /* logo green — end of the brand gradient */
+--moe-sand:#c1b489;      /* warm neutral accent */
+--moe-stone:#c2c1c1;     /* cool neutral accent */
+
+/* ---- Supporting palette (guideline §09) ---- */
+--moe-periwinkle:#7a80ff;
+--moe-violet:#7258a4;
+--moe-purple:#351375;
+--moe-sky:#69cee3;
+--moe-teal-blue:#218caa;
+--moe-steel:#3078a6;
+
+/* ---- Working palette used by the Office templates ---- */
+--moe-ink:#003845;       /* theme dk1 — deck body text + divider blocks */
+--moe-ink-alt:#003944;
+--moe-mint:#5fdda9;      /* theme dk2 */
+--moe-mint-bright:#2ac482;
+--moe-teal-bright:#13a09f;
+--moe-cyan:#0dcfda;
+--moe-sky-bright:#6acee2;
+--moe-sky-soft:#5bafd1;
+--moe-azure:#2baddf;
+--moe-steel-deep:#1673a4;
+--moe-indigo:#382972;
+--moe-violet-bright:#9338ff;
+--moe-violet-office:#7030a0;
+--moe-lilac:#757bbb;
+
+/* ---- Neutrals ---- */
+--n-0:#ffffff;
+--n-25:#fafbfb;
+--n-50:#f2f2f2;   /* theme lt1 — canvas grey */
+--n-100:#e8eaeb;
+--n-200:#d5d5d5;  /* theme lt2 */
+--n-300:#c2c1c1;
+--n-400:#9aa2a6;
+--n-500:#7f7f7f;
+--n-600:#5c686d;
+--n-700:#3f4e54;
+--n-800:#22333a;
+--n-900:#0d1c22;
+
+/* ---- Gradients ---- */
+--grad-brand:linear-gradient(90deg,#3d7eb9 0%,#0da9a6 52%,#07a869 100%); /* @kind color */
+--grad-brand-diag:linear-gradient(135deg,#3d7eb9 0%,#2f9ca9 50%,#07a869 100%); /* @kind color */
+--grad-ink:linear-gradient(180deg,#15445a 0%,#003845 100%); /* @kind color */
+--grad-protect:linear-gradient(180deg,rgba(0,56,69,0) 0%,rgba(0,56,69,.82) 100%); /* @kind color */
+
+/* ---- Semantic aliases ---- */
+--text-heading:var(--moe-purple);
+--text-body:var(--moe-ink);
+--text-muted:var(--n-500);
+--text-inverse:var(--n-0);
+--text-link:var(--moe-steel);
+--text-link-hover:var(--moe-navy);
+--text-accent:var(--moe-teal);
+
+--surface-page:var(--n-50);
+--surface-card:var(--n-0);
+--surface-sunken:var(--n-100);
+--surface-ink:var(--moe-ink);
+--surface-accent-soft:#e9f6f7;
+--surface-purple-soft:#efeaf7;
+
+--border-subtle:var(--n-200);
+--border-strong:var(--n-400);
+--border-accent:var(--moe-teal);
+
+--action-primary:var(--moe-purple);
+--action-primary-hover:#2a0f5e;
+--action-primary-press:#210b4c;
+--action-secondary:var(--moe-teal);
+--action-secondary-hover:#0b9491;
+--action-on-action:var(--n-0);
+--focus-ring:var(--moe-sky-bright);
+
+--status-success:var(--moe-green);
+--status-info:var(--moe-steel);
+--status-warning:#c1873a;
+--status-danger:#b3403f;
+--status-success-soft:#e6f6ee;
+--status-info-soft:#e8f1f7;
+--status-warning-soft:#faf1e2;
+--status-danger-soft:#f9eaea;
+
+/* Data-viz order, taken from the deck colour sheet (slide 3) */
+--viz-1:#7358a5;--viz-2:#0dcfda;--viz-3:#2baddf;--viz-4:#208caa;
+--viz-5:#1673a4;--viz-6:#757bbb;--viz-7:#003944;--viz-8:#7030a0;
+}
