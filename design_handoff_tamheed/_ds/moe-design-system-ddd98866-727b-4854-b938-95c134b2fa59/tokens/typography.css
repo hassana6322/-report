@@ -1,0 +1,39 @@
+:root{
+--font-core:"Bahij TheSansArabic","Helvetica Neue W23 for SKY","Helvetica Neue",Helvetica,"Segoe UI",sans-serif;
+--font-editorial:"Thmanyah Serif Display",Georgia,serif;
+--font-editorial-text:"Thmanyah Serif Text",Georgia,serif;
+--font-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+
+--fw-extralight:200;/* @kind font */--fw-light:300;/* @kind font */--fw-semilight:350;/* @kind font */--fw-regular:400;/* @kind font */
+--fw-semibold:600;/* @kind font */--fw-bold:700;/* @kind font */--fw-extrabold:800;/* @kind font */--fw-black:900;/* @kind font */
+
+/* Screen scale */
+--fs-display:44px;
+--fs-h1:32px;
+--fs-h2:26px;
+--fs-h3:21px;
+--fs-title:18px;
+--fs-body:16px;
+--fs-body-sm:14px;
+--fs-caption:12.5px;
+--fs-micro:11px;
+
+/* Deck scale — 1280x720 artboard, mirrors the .pptx point sizes */
+--fs-slide-hero:54px;    /* title-slide headline */
+--fs-slide-thanks:44px;
+--fs-slide-divider:28px;
+--fs-slide-title:20px;   /* slide title chip: 18-20pt bold */
+--fs-slide-body:16px;
+--fs-slide-small:14px;
+--fs-slide-footer:12px;
+
+--lh-tight:1.15;/* @kind font */
+--lh-snug:1.35;/* @kind font */
+--lh-body:1.65;/* @kind font */
+--lh-loose:1.9;/* @kind font */
+
+--ls-tight:-0.01em;/* @kind font */
+--ls-normal:0;/* @kind font */
+--ls-wide:0.06em;/* @kind font */
+--ls-caps:0.14em;/* @kind font */   /* the WWW.MOE.GOV.SA lockup letterspacing */
+}
