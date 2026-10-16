@@ -1,0 +1,23 @@
+/* Bahij TheSansArabic — working substitute for the guideline face
+   "Helvetica Neue W23 for SKY" (not supplied). Arabic + Latin. */
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-ExtraLight.ttf") format("truetype");font-weight:200;font-style:normal;font-display:swap}
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-Light.ttf") format("truetype");font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-SemiLight.ttf") format("truetype");font-weight:350;font-style:normal;font-display:swap}
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-Plain.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-SemiBold.ttf") format("truetype");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-ExtraBold.ttf") format("truetype");font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:"Bahij TheSansArabic";src:url("../assets/fonts/Bahij_TheSansArabic-Black.ttf") format("truetype");font-weight:900;font-style:normal;font-display:swap}
+
+/* Thmanyah typeface — supplied alongside the brand kit. Editorial / long-form
+   use only; NOT part of the 2025 MOE visual identity guideline. */
+@font-face{font-family:"Thmanyah Sans";src:url("../assets/fonts/thmanyahsans-Light.woff2") format("woff2");font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Sans";src:url("../assets/fonts/thmanyahsans-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Sans";src:url("../assets/fonts/thmanyahsans-Medium.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Sans";src:url("../assets/fonts/thmanyahsans-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Sans";src:url("../assets/fonts/thmanyahsans-Black.woff2") format("woff2");font-weight:900;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Display";src:url("../assets/fonts/thmanyahserifdisplay-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Display";src:url("../assets/fonts/thmanyahserifdisplay-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Display";src:url("../assets/fonts/thmanyahserifdisplay-Black.woff2") format("woff2");font-weight:900;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Text";src:url("../assets/fonts/thmanyahseriftext-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Text";src:url("../assets/fonts/thmanyahseriftext-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
