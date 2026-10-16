@@ -4801,7 +4801,7 @@ class Component extends DCLogic {
       hasrKpis: [
         kpi('نموذجاً مُسلَّماً', String(N), '#3d7eb9'),
         kpi('والداهم مستقران', pct(stable), '#07a869'),
-        kpi('ظروف أسرية خاصة', String(sep + orph), '#7258a4'),
+        kpi('ظروف أسرية خاصة', String(cnt(s => s.par === 'منفصلان' || s.fa === false)), '#7258a4'),
         kpi('مستفيدون من الضمان', String(ss), '#15445a'),
         kpi('حالات صحية', String(healthN), '#218caa'),
         kpi('حالات للمتابعة', String(cases.length), '#c1b489', '#15445a')
