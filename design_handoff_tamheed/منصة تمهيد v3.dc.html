@@ -65,8 +65,11 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
   body:not([data-printing]) [data-print-panel]{background:none!important;box-shadow:none!important;border-radius:0!important;padding:0!important;gap:0!important;overflow:visible!important;align-items:flex-start!important}
   body:not([data-printing]) [data-print-panel]>:not([data-print-box]){display:none!important}
   body:not([data-printing]) [data-print-box]{width:794px!important;height:auto!important}
+  /* الطباعة المباشرة (Ctrl+P): تُطبع الورقة وحدها، ويُخفى نموذج التعبئة وكل ما حولها */
+  body:not([data-printing]) main :not([data-print-panel]):not([data-print-panel] *):not(:has([data-print-panel])){display:none!important}
+  body:not([data-printing]) :has([data-print-panel]){background:#fff!important;box-shadow:none!important}
   [data-print-holder] select{appearance:none!important;-webkit-appearance:none!important;border:none!important;background:none!important;color:inherit!important}
-  [data-single-page]{height:auto!important;min-height:0!important;overflow:visible!important;zoom:.9;break-inside:avoid;page-break-inside:avoid;margin:0 auto!important}
+  [data-single-page]{height:auto!important;min-height:0!important;overflow:visible!important;zoom:var(--tm-print-zoom,1);break-inside:avoid;page-break-inside:avoid;margin:0 auto!important}
 }
 </style>
 <meta name="omelette-owns-print">
@@ -423,7 +426,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#7c8589;font-weight:700;letter-spacing:.02em">{{ previewLabel }}</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="{{ pageStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="{{ pageStyle }}">
                   <div style="display:grid;grid-template-columns:190px minmax(0,1fr) 190px;align-items:center;gap:10px">
                     <div style="display:flex;justify-content:flex-start;align-items:center">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:15px;font-weight:700;line-height:1.55;color:#15445a">
@@ -768,7 +771,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="{{ examPageStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="{{ examPageStyle }}">
                   <sc-if value="{{ examLetterhead }}" hint-placeholder-val="{{ true }}">
                     <div style="display:flex;align-items:center;gap:14px">
                       <div style="width:88px;flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start">
@@ -983,7 +986,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="{{ planPageStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="{{ planPageStyle }}">
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px">
                     <img src="assets/logo/moe-logo-trimmed.png" alt="وزارة التعليم" style="height:64px;object-fit:contain">
                     <div style="text-align:center;font-size:12.5px;line-height:1.85;color:#15445a;font-weight:700">
@@ -1345,7 +1348,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:24px 40px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:24px 40px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
                     <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
@@ -1502,7 +1505,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:8px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:8px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
                     <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
@@ -1754,7 +1757,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
                     <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
@@ -2157,7 +2160,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:22px 38px 26px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:16px 34px 18px;display:flex;flex-direction:column;gap:6px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:190px minmax(0,1fr) 190px;align-items:center;gap:10px">
                     <div style="display:flex;justify-content:flex-start;align-items:center">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:14px;font-weight:700;line-height:1.45;color:#15445a">
@@ -2449,7 +2452,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:22px 38px 26px;display:flex;flex-direction:column;gap:10px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:22px 38px 26px;display:flex;flex-direction:column;gap:10px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:12px">
                     <div style="display:flex;justify-content:flex-start">{{ moeLogoImg }}</div>
                     <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.45;color:#15445a">
@@ -2785,117 +2788,108 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                 <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
                 <div data-print-box="1" style="{{ boxStyle }}">
                   <div data-print-scale="1" style="{{ scaleStyle }}">
-                    <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;background:#fff;padding:46px 54px;display:flex;flex-direction:column;gap:22px;box-shadow:0 20px 50px rgba(0,56,69,.18)">
-
-                      <div style="display:flex;align-items:center;justify-content:flex-start;gap:16px">
-                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px">
-                          <span style="display:block;height:8px;width:54px;border-radius:99px;background:linear-gradient(90deg,#218caa,#0da9a6)"></span>
-                          <span style="display:block;height:8px;width:36px;border-radius:99px;background:#0da9a6"></span>
-                          <span style="display:block;height:8px;width:20px;border-radius:99px;background:#5fdda9"></span>
+                    <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;background:#fff;padding:22px 38px 20px;display:flex;flex-direction:column;gap:9px;box-sizing:border-box;box-shadow:0 20px 50px rgba(0,56,69,.18)">
+                      <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
+                        <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
+                        <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
+                          <div>المملكة العربية السعودية</div>
+                          <div>وزارة التعليم</div>
+                          <div>الإدارة العامة للتعليم {{ examRegionText }}</div>
+                          <div>{{ examSchool }}</div>
                         </div>
-                        <img src="assets/logo/tamheed-mark.png" alt="تمهيد" style="height:78px;object-fit:contain;display:block" />
+                        <div style="display:flex;align-items:center;justify-content:flex-end">{{ refSchoolLogoImg }}</div>
+                      </div>
+                      <div style="height:0;border-top:2px solid #15445a;border-bottom:1px solid #15445a;padding-top:2px"></div>
+
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                        <div style="font-size:20px;font-weight:700;color:#15445a">{{ reportPageTitle }}</div>
+                        <div style="font-size:13px;color:#5c686d">{{ reportPageSub }}</div>
                       </div>
 
-                      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-                        <div style="font-size:22px;font-weight:700;color:#15445a">{{ reportPageTitle }}</div>
-                        <div style="font-size:14px;color:#5c686d">{{ reportPageSub }}</div>
-                        <div style="height:3px;width:120px;background:#0da9a6;border-radius:99px"></div>
-                      </div>
-
-                      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;border:1px solid #e0e6e9;border-radius:14px;padding:16px 18px">
-                        <div style="display:flex;flex-direction:column;gap:5px">
-                          <span style="font-size:11.5px;color:#6b7480;font-weight:700">اسم الطالب</span>
-                          <span style="font-size:14px;font-weight:700;color:#15445a">{{ reportName }}</span>
+                      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;border:1px solid #15445a">
+                        <div style="display:flex;flex-direction:column">
+                          <div style="background:#15445a;color:#fff;font-weight:700;font-size:13px;padding:3px 8px;text-align:center">اسم الطالب</div>
+                          <div style="padding:4px 8px;font-size:14px;font-weight:700;color:#15445a;text-align:center">{{ reportName }}</div>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:5px">
-                          <span style="font-size:11.5px;color:#6b7480;font-weight:700">الصف</span>
-                          <span style="font-size:14px;color:#22333a">{{ reportClass }}</span>
+                        <div style="display:flex;flex-direction:column;border-inline-start:1px solid #15445a">
+                          <div style="background:#15445a;color:#fff;font-weight:700;font-size:13px;padding:3px 8px;text-align:center">الصف</div>
+                          <div style="padding:4px 8px;font-size:14px;text-align:center">{{ reportClass }}</div>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:5px">
-                          <span style="font-size:11.5px;color:#6b7480;font-weight:700">التاريخ</span>
-                          <span style="font-size:14px;color:#22333a">{{ reportDate }}</span>
+                        <div style="display:flex;flex-direction:column;border-inline-start:1px solid #15445a">
+                          <div style="background:#15445a;color:#fff;font-weight:700;font-size:13px;padding:3px 8px;text-align:center">التاريخ</div>
+                          <div style="padding:4px 8px;font-size:14px;text-align:center">{{ reportDate }}</div>
                         </div>
                       </div>
 
                       <sc-if value="{{ reportStudentMode }}" hint-placeholder-val="{{ false }}">
-                        <div style="display:flex;flex-direction:column;gap:20px">
-                          <p style="margin:0;font-size:14.5px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ reportStudentOpening }}</p>
+                        <div style="display:flex;flex-direction:column;gap:8px">
+                          <p style="margin:0;font-size:13.5px;line-height:1.8;color:#22333a;text-wrap:pretty">{{ reportStudentOpening }}</p>
                           <sc-for list="{{ reportStudentBlocks }}" as="b" hint-placeholder-count="2">
-                            <div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #e0e6e9;padding-top:18px">
-                              <span style="font-size:16px;font-weight:700;color:#15445a">{{ b.heading }}</span>
-                              <p style="margin:0;font-size:14.5px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ b.lead }}</p>
+                            <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid #d5dde1;padding-top:7px">
+                              <span style="font-size:14.5px;font-weight:700;color:#15445a">{{ b.heading }}</span>
+                              <p style="margin:0;font-size:13.5px;line-height:1.75;color:#22333a;text-wrap:pretty">{{ b.lead }}</p>
                               <sc-if value="{{ b.chipsShown }}" hint-placeholder-val="{{ true }}">
-                                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap">
                                   <sc-for list="{{ b.chips }}" as="c" hint-placeholder-count="3">
                                     <span style="{{ c.style }}">{{ c.label }}</span>
                                   </sc-for>
                                 </div>
                               </sc-if>
-                              <p style="margin:0;font-size:14px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ b.body }}</p>
+                              <p style="margin:0;font-size:13px;line-height:1.75;color:#22333a;text-wrap:pretty">{{ b.body }}</p>
                               <sc-if value="{{ b.exShown }}" hint-placeholder-val="{{ true }}">
-                                <div style="display:flex;flex-direction:column;gap:9px;background:#f6f8f9;border-radius:14px;padding:14px 16px">
-                                  <span style="font-size:12px;font-weight:700;color:#5c686d">{{ b.exTitle }}</span>
-                                  <div style="display:flex;gap:7px;flex-wrap:wrap">
-                                    <sc-for list="{{ b.examples }}" as="ex" hint-placeholder-count="6">
-                                      <span style="background:#fff;border:1px solid #dde7ea;border-radius:99px;padding:6px 12px;font-size:12px;color:#15445a">{{ ex.label }}</span>
-                                    </sc-for>
-                                  </div>
+                                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;background:#f6f8f9;border-radius:8px;padding:6px 10px">
+                                  <span style="font-size:11.5px;font-weight:700;color:#5c686d;margin-inline-end:4px">{{ b.exTitle }}</span>
+                                  <sc-for list="{{ b.examples }}" as="ex" hint-placeholder-count="6">
+                                    <span style="background:#fff;border:1px solid #dde7ea;border-radius:99px;padding:2px 9px;font-size:11px;color:#15445a">{{ ex.label }}</span>
+                                  </sc-for>
                                 </div>
                               </sc-if>
                             </div>
                           </sc-for>
-                          <p style="margin:0;border-top:1px solid #e0e6e9;padding-top:18px;font-size:14px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ reportStudentClosing }}</p>
+                          <p style="margin:0;border-top:1px solid #d5dde1;padding-top:7px;font-size:13px;line-height:1.75;color:#22333a;text-wrap:pretty">{{ reportStudentClosing }}</p>
                         </div>
                       </sc-if>
 
                       <sc-if value="{{ reportCounsellorMode }}" hint-placeholder-val="{{ true }}">
                       <sc-for list="{{ reportSections }}" as="sec" hint-placeholder-count="2">
-                        <div style="display:flex;flex-direction:column;gap:14px;border-top:1px solid #e0e6e9;padding-top:18px">
-                          <span style="font-size:15px;font-weight:700;color:#15445a">{{ sec.title }}</span>
+                        <div style="display:flex;flex-direction:column;gap:6px;border:1px solid #d5dde1;border-radius:8px;padding:7px 10px">
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                            <span style="font-size:14.5px;font-weight:700;color:#15445a">{{ sec.title }}</span>
+                            <sc-if value="{{ sec.isTop }}" hint-placeholder-val="{{ true }}">
+                              <span style="display:flex;align-items:baseline;gap:8px"><span style="font-size:19px;font-weight:700;color:#15445a;letter-spacing:2px">{{ sec.code }}</span><span style="font-size:12px;color:#5c686d">{{ sec.codeNames }}</span></span>
+                            </sc-if>
+                            <sc-if value="{{ sec.isSum }}" hint-placeholder-val="{{ false }}">
+                              <span style="display:flex;align-items:center;gap:8px"><span style="{{ sec.bandStyle }}">{{ sec.bandText }}</span><span style="font-size:12px;color:#5c686d">{{ sec.scoreText }}</span></span>
+                            </sc-if>
+                          </div>
 
-                          <sc-if value="{{ sec.isTop }}" hint-placeholder-val="{{ true }}">
-                            <div style="display:flex;flex-direction:column;gap:7px;background:#f6f8f9;border-radius:14px;padding:16px 18px">
-                              <span style="font-size:26px;font-weight:700;color:#15445a;letter-spacing:2px">{{ sec.code }}</span>
-                              <span style="font-size:13.5px;color:#5c686d">{{ sec.codeNames }}</span>
-                            </div>
-                          </sc-if>
-                          <sc-if value="{{ sec.isSum }}" hint-placeholder-val="{{ false }}">
-                            <div style="display:flex;align-items:center;gap:12px;background:#f6f8f9;border-radius:14px;padding:16px 18px">
-                              <span style="{{ sec.bandStyle }}">{{ sec.bandText }}</span>
-                              <span style="font-size:13.5px;color:#5c686d">{{ sec.scoreText }}</span>
-                            </div>
-                          </sc-if>
-
-                          <div style="display:flex;flex-direction:column;gap:10px">
+                          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 22px">
                             <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="6">
-                              <div style="display:flex;align-items:center;gap:12px">
+                              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
                                 <span style="{{ row.nameStyle }}">{{ row.name }}</span>
-                                <span style="flex:1;height:9px;background:#eef2f4;border-radius:99px;overflow:hidden;display:block">
+                                <span style="flex:1;height:7px;background:#eef2f4;border-radius:99px;overflow:hidden;display:block">
                                   <span style="{{ row.fillStyle }}"></span>
                                 </span>
-                                <span style="font-size:12px;color:#5c686d;width:62px;text-align:left;flex:0 0 auto">{{ row.value }}</span>
+                                <span style="font-size:11.5px;color:#5c686d;width:40px;text-align:left;flex:0 0 auto">{{ row.value }}</span>
                               </div>
                             </sc-for>
                           </div>
 
                           <sc-for list="{{ sec.notes }}" as="n" hint-placeholder-count="2">
-                            <div style="border:1px solid #e0e6e9;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:9px">
-                              <span style="{{ n.kindStyle }}">{{ n.kindLabel }}</span>
-                              <span style="font-size:13.5px;line-height:1.95;color:#22333a">{{ n.text }}</span>
+                            <div style="border-top:1px solid #eef2f4;padding-top:5px;display:flex;flex-direction:column;gap:4px">
+                              <div style="display:flex;align-items:flex-start;gap:8px">
+                                <span style="{{ n.kindStyle }}">{{ n.kindLabel }}</span>
+                                <span style="font-size:12.5px;line-height:1.7;color:#22333a;flex:1">{{ n.text }}</span>
+                              </div>
                               <sc-if value="{{ n.hasStudentText }}" hint-placeholder-val="{{ false }}">
-                                <div style="background:#f6f8f9;border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:5px">
-                                  <span style="font-size:11px;font-weight:700;color:#5c686d">صيغة تُقال للطالب</span>
-                                  <span style="font-size:13px;line-height:1.95;color:#22333a">{{ n.studentText }}</span>
-                                </div>
+                                <div style="background:#f6f8f9;border-radius:8px;padding:5px 10px;font-size:12px;line-height:1.7;color:#22333a"><b style="color:#5c686d">صيغة تُقال للطالب: </b>{{ n.studentText }}</div>
                               </sc-if>
                               <sc-if value="{{ n.hasExamples }}" hint-placeholder-val="{{ true }}">
-                                <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #eef2f4;padding-top:10px">
-                                  <span style="font-size:11.5px;font-weight:700;color:#5c686d">أمثلة للنقاش</span>
-                                  <div style="display:flex;gap:6px;flex-wrap:wrap">
-                                    <sc-for list="{{ n.examples }}" as="ex" hint-placeholder-count="8">
-                                      <span style="background:#eef4f6;border:1px solid #dde7ea;border-radius:99px;padding:5px 11px;font-size:11.5px;color:#15445a">{{ ex.label }}</span>
-                                    </sc-for>
-                                  </div>
+                                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px">
+                                  <span style="font-size:11.5px;font-weight:700;color:#5c686d;margin-inline-end:4px">أمثلة للنقاش:</span>
+                                  <sc-for list="{{ n.examples }}" as="ex" hint-placeholder-count="8">
+                                    <span style="background:#eef4f6;border:1px solid #dde7ea;border-radius:99px;padding:1px 8px;font-size:11px;color:#15445a">{{ ex.label }}</span>
+                                  </sc-for>
                                 </div>
                               </sc-if>
                             </div>
@@ -2904,17 +2898,16 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                       </sc-for>
                       </sc-if>
 
-                      <div style="font-size:11.5px;line-height:1.9;color:#5c686d;background:#f6f8f9;border-radius:12px;padding:12px 14px">هذا التقرير أداة استرشادية للنقاش بين الطالب وموجّهه الطلابي، ولا يحدد قراراً نهائياً وحده. وبنود الاستبانة غير مقنّنة.</div>
+                      <div style="font-size:11px;line-height:1.7;color:#5c686d">هذا التقرير أداة استرشادية للنقاش بين الطالب وموجّهه الطلابي، ولا يحدد قراراً نهائياً وحده. وبنود الاستبانة غير مقنّنة.</div>
 
-                      <div style="margin-top:auto;padding-bottom:20px;display:flex;justify-content:flex-end;color:#15445a">
-                        <div style="display:flex;flex-direction:column;gap:7px;align-items:center;min-width:210px">
+                      <div style="margin-top:auto;display:flex;justify-content:flex-end;color:#15445a">
+                        <div style="display:flex;flex-direction:column;gap:4px;align-items:center;min-width:210px">
                           <div style="font-size:13.5px;font-weight:700">الموجّه الطلابي</div>
-                          <div style="font-size:14px;opacity:.9">{{ reportUser }}</div>
+                          <div style="font-size:14px">{{ reportUser }}</div>
+                          <div style="font-size:13px;color:#22333a">التوقيع: ...........................</div>
                         </div>
                       </div>
-
-                    
-</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3880,9 +3873,11 @@ class Component extends DCLogic {
       }, 60);
     }
     window.addEventListener('resize', this.measure);
+    this._beforePrint = () => this.setPrintZoom(this.pageRef.current);
+    window.addEventListener('beforeprint', this._beforePrint);
     setTimeout(this.measure, 60);
   }
-  componentWillUnmount() { window.removeEventListener('resize', this.measure); }
+  componentWillUnmount() { window.removeEventListener('resize', this.measure); window.removeEventListener('beforeprint', this._beforePrint); }
   componentDidUpdate() {
     this.measure();
     const s = this.state;
@@ -4156,13 +4151,13 @@ class Component extends DCLogic {
         ]
       },
       modplan: {
-        title: 'نموذج خطة تعديل السلوك', short: 'خطة تعديل السلوك',
+        title: 'نموذج خطة تعديل السلوك', short: 'خطة تعديل السلوك', dense: true,
         blocks: [
           { t: 'heading', text: 'أولاً: البيانات الأولية' },
-          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب' }, { k: 'grade', label: 'الصف' }, { k: 'cls', label: 'الفصل' },
+          { t: 'fields', cols: 4, items: [{ k: 'name', label: 'اسم الطالب' }, { k: 'grade', label: 'الصف' }, { k: 'cls', label: 'الفصل' },
             { k: 'birth', label: 'تاريخ الميلاد' }, { k: 'age', label: 'العمر الزمني' }, { k: 'start', label: 'تاريخ البداية' }, { k: 'end', label: 'تاريخ النهاية' }] },
           { t: 'heading', text: 'ثانياً: تحديد المشكلة السلوكية' },
-          { t: 'fields', items: [{ k: 'problem', label: 'المشكلة السلوكية' }, { k: 'degree', label: 'درجتها' }] },
+          { t: 'fields', cols: 2, items: [{ k: 'problem', label: 'المشكلة السلوكية' }, { k: 'degree', label: 'درجتها' }] },
           { t: 'area', k: 'desc', label: 'وصف المشكلة السلوكية' },
           { t: 'area', k: 'signs', label: 'المظاهر السلوكية التي تبدو عند الطالب' },
           { t: 'heading', text: 'ثالث: قياس شدة أو تكرار السلوك' },
@@ -4174,7 +4169,7 @@ class Component extends DCLogic {
             { k: 'q4', label: 'الإجراءات السابقة التي تم استخدامها للحد من السلوك من قبل المعلم/ المعلمة ؟' }] },
           { t: 'heading', text: 'خامساً: تصميم خطة تعديل السلوك' },
           { t: 'area', k: 'target', label: 'تعريف السلوك المرغوب في إكسابه للطالب/ الطالبة إجرائيا.' },
-          { t: 'lines', label: 'الإجراءات المستخدمة للحد من السلوك غير المرغوب فيه وتساعد على تحقيق السلوك المرغوب :',
+          { t: 'lines', cols: 2, label: 'الإجراءات المستخدمة للحد من السلوك غير المرغوب فيه وتساعد على تحقيق السلوك المرغوب :',
             items: ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'].map((n, i) => ({ k: 'p' + i, label: 'الإجراء ' + n })) },
           { t: 'heading', text: 'متابعة السلوك:' },
           Object.assign({}, freq, { k: 'follow' }),
@@ -4527,13 +4522,19 @@ class Component extends DCLogic {
     });
     const sheet = [];
     const contactLook = def.design === 'contact';
+    // النماذج الطويلة (dense) تُرسم بخط ومسافات أصغر لتبقى في صفحة واحدة مقروءة
+    const dense = !!def.dense;
+    const fsz = dense ? 13.5 : 15;
+    const gridCols = n => 'repeat(' + n + ',minmax(0,1fr))';
     const box = onn => R('span', { style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 13, height: 13, flex: '0 0 auto', border: '1.5px solid ' + ink, borderRadius: 2, fontSize: 10, fontWeight: 700, color: ink } }, onn ? '✓' : '');
     def.blocks.forEach((b, bi) => {
       const key = 's' + bi;
       if (b.hidden) return;
       if (b.t === 'fields') {
-        sheet.push(R('div', { key, style: { display: 'flex', flexWrap: 'wrap', gap: '6px 18px', fontSize: 15 } },
-          b.items.map((f, i) => R('div', { key: i, style: { flex: f.w ? '1 1 100%' : '1 1 200px', display: 'flex', gap: 6, alignItems: 'baseline', minWidth: 0 } },
+        sheet.push(R('div', { key, style: b.cols
+            ? { display: 'grid', gridTemplateColumns: gridCols(b.cols), gap: dense ? '3px 16px' : '6px 18px', fontSize: fsz }
+            : { display: 'flex', flexWrap: 'wrap', gap: dense ? '3px 16px' : '6px 18px', fontSize: fsz } },
+          b.items.map((f, i) => R('div', { key: i, style: { flex: b.cols ? 'none' : (f.w ? '1 1 100%' : '1 1 200px'), gridColumn: b.cols && f.w ? '1 / -1' : 'auto', display: 'flex', gap: 6, alignItems: 'baseline', minWidth: 0 } },
             R('span', { style: { whiteSpace: 'nowrap' } }, f.label + ':'),
             def.blank || !v(f.k).trim() ? R('span', { style: { flex: 1, borderBottom: '1px dotted #7a8a90', minHeight: 18 } }) : R('b', { style: { color: ink, flex: 1 } }, v(f.k))))));
       } else if (b.t === 'grid') {
@@ -4542,22 +4543,28 @@ class Component extends DCLogic {
             R('div', { style: { background: ink, color: '#fff', fontWeight: 700, fontSize: 13, padding: '3px 8px', textAlign: 'center' } }, f.label),
             R('div', { style: { padding: '3px 8px', minHeight: 26, fontSize: 14, textAlign: 'center' } }, v(f.k))))));
       } else if (b.t === 'heading') {
-        sheet.push(R('div', { key, style: { fontSize: contactLook ? 14.5 : 15.5, fontWeight: 700, color: ink, marginTop: contactLook ? 1 : (b.plain ? 2 : 6) } }, b.text));
+        sheet.push(R('div', { key, style: { fontSize: contactLook || dense ? 14.5 : 15.5, fontWeight: 700, color: ink, lineHeight: dense ? 1.45 : 'normal', marginTop: contactLook ? 1 : dense ? 2 : (b.plain ? 2 : 6) } }, b.text));
       } else if (b.t === 'para') {
         sheet.push(R('div', { key, style: { fontSize: contactLook ? 13.5 : 15, lineHeight: contactLook ? 1.6 : 1.9, textAlign: b.align || 'start', fontWeight: b.bold ? 700 : 400, color: b.bold ? ink : '#22333a',
           marginTop: b.bottom ? 'auto' : 0, border: b.boxed ? '1px solid ' + ink : 'none', padding: b.boxed ? '4px 10px' : 0 } }, fill(b.text)));
       } else if (b.t === 'area') {
         const val = def.blank ? '' : v(b.k).trim();
-        sheet.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 2, fontSize: 15 } },
+        if (dense && !val && (b.lines || 1) === 1) {
+          sheet.push(R('div', { key, style: { display: 'flex', gap: 6, alignItems: 'baseline', fontSize: fsz } },
+            R('span', { style: { whiteSpace: 'nowrap' } }, b.label), R('span', { style: { flex: 1, borderBottom: '1px dotted #7a8a90', minHeight: 18 } })));
+          return;
+        }
+        sheet.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: dense ? 0 : 2, fontSize: fsz } },
           R('span', null, b.label),
           val ? R('div', { style: { whiteSpace: 'pre-wrap', color: ink, fontWeight: 700, lineHeight: 1.8, borderBottom: '1px dotted #7a8a90', paddingBottom: 2 } }, val)
-            : Array.from({ length: b.lines || 1 }, (_, i) => R('div', { key: i, style: { borderBottom: '1px dotted #7a8a90', height: 26 } }))));
+            : Array.from({ length: b.lines || 1 }, (_, i) => R('div', { key: i, style: { borderBottom: '1px dotted #7a8a90', height: dense ? 20 : 26 } }))));
       } else if (b.t === 'qa' || b.t === 'lines') {
-        sheet.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 15 } },
+        sheet.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: dense ? 2 : 4, fontSize: fsz } },
           b.label ? R('span', null, b.label) : null,
+          R('div', { style: b.cols ? { display: 'grid', gridTemplateColumns: gridCols(b.cols), gap: dense ? '2px 18px' : '4px 18px' } : { display: 'flex', flexDirection: 'column', gap: dense ? 2 : 4 } },
           b.items.map((f, i) => R('div', { key: i, style: { display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: b.t === 'qa' ? 'wrap' : 'nowrap' } },
             R('span', { style: { flex: b.t === 'qa' ? '1 1 100%' : '0 0 auto' } }, (b.t === 'qa' ? (i + 1) + '.  ' : '') + f.label),
-            v(f.k).trim() ? R('b', { style: { color: ink, flex: 1 } }, v(f.k)) : R('span', { style: { flex: 1, borderBottom: '1px dotted #7a8a90', minHeight: b.t === 'qa' ? 22 : 18 } })))));
+            v(f.k).trim() ? R('b', { style: { color: ink, flex: 1 } }, v(f.k)) : R('span', { style: { flex: 1, borderBottom: '1px dotted #7a8a90', minHeight: b.t === 'qa' ? (dense ? 14 : 22) : 18 } }))))));
       } else if (b.t === 'checks') {
         const opts = b.opts.map(o => R('span', { key: o, style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, box(on(b.k, o)), o));
         if (b.other) opts.push(R('span', { key: 'o', style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, box(!!v(b.k + 'Other').trim()), b.other + ': ',
@@ -4587,7 +4594,7 @@ class Component extends DCLogic {
         sheet.push(R('table', { key, style: { borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' } },
           R('thead', null, head),
           R('tbody', null, rows.map((r, i) => R('tr', { key: i }, r.map((cell, j) => R('td', { key: j, style: {
-            border: '1px solid ' + ink, padding: '4px 6px', fontSize: 13, height: b.tall ? 62 : 30, verticalAlign: 'middle', textAlign: b.cols[j].wide ? 'start' : 'center',
+            border: '1px solid ' + ink, padding: dense ? '2px 6px' : '4px 6px', fontSize: 13, height: b.tall ? 62 : (dense ? 26 : 30), verticalAlign: 'middle', textAlign: b.cols[j].wide ? 'start' : 'center',
             fontWeight: b.cols[j].fixed || (b.num && j === 0) ? 700 : 400, color: b.cols[j].fixed || (b.num && j === 0) ? ink : '#22333a', wordBreak: 'break-word' } }, cell)))))));
       } else if (b.t === 'panel') {
         sheet.push(R('div', { key, style: { border: '1px solid ' + ink, display: 'flex', flexDirection: 'column' } },
@@ -4601,6 +4608,16 @@ class Component extends DCLogic {
           b.rows.map((r, i) => R('div', { key: i, style: { display: 'grid', gridTemplateColumns: 'repeat(' + r.length + ',minmax(0,1fr))', borderBottom: i < b.rows.length - 1 ? '1px solid #22333a' : 'none' } },
             r.map((c, j) => R('div', { key: j, style: { padding: '6px 8px', minHeight: 30, fontWeight: j === 0 ? 700 : 400, borderInlineStart: j ? '1px solid #22333a' : 'none' } }, c))))));
       } else if (b.t === 'sign') {
+        if (dense) {
+          sheet.push(R('div', { key, style: { marginTop: 'auto', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6, fontSize: fsz } },
+            b.roles.map((r, i) => R('div', { key: i, style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+              r.role ? R('div', { style: { fontWeight: 700, color: ink } }, r.role) : null,
+              R('div', { style: { display: 'flex', gap: 24, flexWrap: 'wrap' } },
+                R('span', null, 'الاسم: ', r.k && v(r.k).trim() ? R('b', { style: { color: ink } }, v(r.k)) : dots(30)),
+                R('span', null, 'التوقيع: ' + dots(22)),
+                b.noDate ? null : R('span', null, 'التاريخ: ' + dots(22)))))));
+          return;
+        }
         const roleCol = (r, i) => R('div', { key: i, style: { display: 'flex', flexDirection: 'column', gap: b.compact ? 8 : 12, alignItems: 'stretch', minWidth: 0 } },
           r.role ? R('div', { style: { fontWeight: 700, color: ink, textAlign: 'center' } }, r.role) : null,
           R('div', null, 'الاسم: ', r.k && v(r.k).trim() ? R('b', { style: { color: ink } }, v(r.k)) : dots(26)),
@@ -4633,7 +4650,7 @@ class Component extends DCLogic {
       rulesSecret: def.secret || '',
       rulesHasSecret: !!def.secret,
       rulesTitle: def.title,
-      rulesSheet: R('div', { style: { display: 'flex', flexDirection: 'column', gap: contactLook ? 5 : 12, flex: 1 } }, sheet),
+      rulesSheet: R('div', { style: { display: 'flex', flexDirection: 'column', gap: contactLook ? 5 : dense ? 6 : 12, flex: 1 } }, sheet),
       rulesCanClear: !def.blank,
       onRulesClear: () => { const cur = this.rulesState(); const data = Object.assign({}, cur.data); delete data[id]; this.setRules(Object.assign({}, cur, { data })); }
     };
@@ -6280,6 +6297,14 @@ class Component extends DCLogic {
     });
   }
 
+  // الطباعة المباشرة: تصغير الورقة بقدر ما يلزم لتبقى صفحة A4 واحدة
+  setPrintZoom(node) {
+    if (!node) return;
+    node.style.removeProperty('--tm-print-zoom');
+    const h = node.scrollHeight || 1123;
+    if (h > 1123) node.style.setProperty('--tm-print-zoom', ((1123 / h) * 0.99).toFixed(4));
+  }
+
   // shrink a one-page sheet just enough that nothing is cut off at the A4 edge
   fitSinglePage(clone, stage) {
     clone.style.height = 'auto';
@@ -6599,6 +6624,7 @@ class Component extends DCLogic {
     });
     holder.appendChild(clone);
     document.body.appendChild(holder);
+    this.setPrintZoom(clone);
     document.body.setAttribute('data-printing', '1');
     const prevTitle = document.title;
     document.title = this.state.section === 'exam' ? 'جدول الاختبارات'
@@ -7063,8 +7089,8 @@ class Component extends DCLogic {
         { label: 'تعزيز السلوك الإيجابي', style: { border: '1px solid #d5d5d5', background: '#15445a', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '8px 6px', width: 82 } }
       ],
       planPageStyle: {
-        width: 794, minHeight: 1123, background: '#fff', padding: '40px 44px',
-        display: 'flex', flexDirection: 'column', gap: 14, boxSizing: 'border-box',
+        width: 794, minHeight: 1123, background: '#fff', padding: '26px 40px',
+        display: 'flex', flexDirection: 'column', gap: 10, boxSizing: 'border-box',
         fontFamily: 'var(--font-core)', direction: 'rtl'
       },
       planPrincipalName: s.plan.principal || '—',
@@ -7576,9 +7602,9 @@ class Component extends DCLogic {
       previewLabel: pageH > 1180 ? 'معاينة A4 — المحتوى يتجاوز صفحة وسيُقسم في ملف PDF' : 'معاينة بمقاس A4',
       pageStyle: {
         width: 794, minHeight: 1123, background: '#fff',
-        // تحضير الجلسة يتجاوز الصفحة ببضعة بكسلات، فتُضيَّق مسافاته ليبقى صفحة واحدة
-        padding: s.section === 'session' ? '34px 50px' : '46px 54px',
-        display: 'flex', flexDirection: 'column', gap: s.section === 'session' ? 14 : 20, boxShadow: '0 20px 50px rgba(0,56,69,.18)'
+        // تحضير الجلسة والمحضر الموسّع أطول من غيرهما، فتُضيَّق مسافاتهما ليبقيا صفحة واحدة
+        padding: s.section === 'session' ? '34px 50px' : s.section === 'minutes' ? '26px 46px' : '46px 54px',
+        display: 'flex', flexDirection: 'column', gap: s.section === 'session' ? 14 : s.section === 'minutes' ? 10 : 20, boxShadow: '0 20px 50px rgba(0,56,69,.18)'
       },
       boxStyle: { width: 794 * fit + 'px', height: pageH * fit + 'px', flex: '0 0 auto' },
       scaleStyle: { transform: 'scale(' + fit + ')', transformOrigin: 'top right', width: '794px', height: pageH + 'px' },
