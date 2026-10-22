@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="_ds/moe-design-system-ddd98866-727b-4854-b938-95c134b2fa59/styles.css">
 <script src="_ds/moe-design-system-ddd98866-727b-4854-b938-95c134b2fa59/_ds_bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="questionnaires.global.js"></script>
 <script src="plan-followup.global.js"></script>
 <script src="asset-map-v2.js"></script>
@@ -64,8 +65,11 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
   body:not([data-printing]) [data-print-panel]{background:none!important;box-shadow:none!important;border-radius:0!important;padding:0!important;gap:0!important;overflow:visible!important;align-items:flex-start!important}
   body:not([data-printing]) [data-print-panel]>:not([data-print-box]){display:none!important}
   body:not([data-printing]) [data-print-box]{width:794px!important;height:auto!important}
+  /* الطباعة المباشرة (Ctrl+P): تُطبع الورقة وحدها، ويُخفى نموذج التعبئة وكل ما حولها */
+  body:not([data-printing]) main :not([data-print-panel]):not([data-print-panel] *):not(:has([data-print-panel])){display:none!important}
+  body:not([data-printing]) :has([data-print-panel]){background:#fff!important;box-shadow:none!important}
   [data-print-holder] select{appearance:none!important;-webkit-appearance:none!important;border:none!important;background:none!important;color:inherit!important}
-  [data-single-page]{height:auto!important;min-height:0!important;overflow:visible!important;zoom:.9;break-inside:avoid;page-break-inside:avoid;margin:0 auto!important}
+  [data-single-page]{height:auto!important;min-height:0!important;overflow:visible!important;zoom:var(--tm-print-zoom,1);break-inside:avoid;page-break-inside:avoid;margin:0 auto!important}
 }
 </style>
 <meta name="omelette-owns-print">
@@ -206,6 +210,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
       </nav>
 
       <div data-tm-collapse="1" style="margin-top:auto;display:flex;flex-direction:column;gap:14px">
+        <button onClick="{{ onOpenSchoolSetup }}" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:16px;min-height:44px;padding:0 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:start" style-hover="background:rgba(255,255,255,.14)">بيانات المدرسة والشعار</button>
         <button onClick="{{ goAbout }}" style="{{ aboutBtnStyle }}" style-hover="background:#f4f1fb">
           <img src="assets/icons/team-idea.png" alt="" style="{{ aboutIconStyle }}">
           <span style="display:flex;flex-direction:column;gap:3px;text-align:start;min-width:0">
@@ -252,6 +257,23 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
         <div style="{{ headDateStyle }}">{{ todayHijri }}<br>{{ todayGreg }}</div>
       </div>
 
+      <sc-if value="{{ saveErrorOn }}" hint-placeholder-val="{{ false }}">
+        <div data-tm-chrome="1" role="alert" style="background:#fbeaea;border:1px solid #e3b3b3;border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13.5px;line-height:1.9;color:#8a2325;font-weight:700;flex:1 1 260px">تعذّر حفظ بياناتك على هذا الجهاز لأن مساحة المتصفح ممتلئة. صدّر نسخة احتياطية الآن حتى لا تضيع آخر تعديلاتك.</span>
+          <button onClick="{{ onExportData }}" style="background:#a5322f;color:#fff;border:none;border-radius:99px;min-height:42px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">تصدير نسخة احتياطية</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ backupDue }}" hint-placeholder-val="{{ false }}">
+        <div data-tm-chrome="1" style="background:#f7f2e4;border:1px solid #d8c99c;border-radius:16px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;line-height:1.9;color:#5e5023;flex:1 1 260px"><b>{{ backupDueTitle }}</b> بياناتك محفوظة في هذا المتصفح فقط، والنسخة الاحتياطية تحميها إن مُسح المتصفح أو تغيّر الجهاز.</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ onExportData }}" style="background:#15445a;color:#fff;border:none;border-radius:99px;min-height:40px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">تصدير الآن</button>
+            <button onClick="{{ onSnoozeBackup }}" style="background:transparent;border:1px solid #c9b98a;color:#5e5023;border-radius:99px;min-height:40px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">لاحقًا</button>
+          </div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ showCaseNotice }}" hint-placeholder-val="{{ false }}">
         <div style="background:#fdf3e8;border:1px solid #d9a24f;border-radius:16px;padding:14px 18px;margin-bottom:18px;display:flex;flex-direction:column;gap:6px">
           <span style="font-size:13px;font-weight:700;color:#7a4e14">تنبيه بشأن الحالات الحساسة</span>
@@ -261,6 +283,36 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
 
       <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;flex-direction:column;gap:26px">
+          <sc-if value="{{ schoolSetupShow }}" hint-placeholder-val="{{ false }}">
+            <div data-tm-chrome="1" style="background:#fff;border:1px solid #cfe0e6;border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 6px 20px rgba(0,56,69,.10)">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:18px;font-weight:700;color:#15445a">بيانات مدرستك</span>
+                <span style="font-size:13px;line-height:1.9;color:#5c686d">تظهر في ترويسة كل نموذج تطبعه. يمكنك تغييرها لاحقًا من «بيانات المدرسة والشعار» في القائمة.</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#5c686d">اسم المدرسة
+                  <input value="{{ examSchool }}" onChange="{{ onExamSchool }}" placeholder="مثال: ثانوية … " style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;color:#22333a;font-weight:400" />
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#5c686d">الإدارة العامة للتعليم
+                  <input value="{{ examRegion }}" onChange="{{ onExamRegion }}" placeholder="مثال: بالمنطقة الشرقية" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;color:#22333a;font-weight:400" />
+                </label>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <div style="width:72px;height:72px;border:1px dashed #b8c8ce;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#f6f9fa;overflow:hidden">{{ schoolLogoImg64 }}</div>
+                <label style="display:inline-flex;align-items:center;background:#15445a;color:#fff;border-radius:99px;min-height:42px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer">
+                  {{ refLogoLabel }}
+                  <input type="file" accept="image/*" onChange="{{ onSchoolLogo }}" style="display:none" />
+                </label>
+                <button onClick="{{ onUseImamLogo }}" style="background:#fff;color:#15445a;border:1px solid #15445a;border-radius:99px;min-height:42px;padding:0 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">استخدام شعار ثانوية الإمام</button>
+                <sc-if value="{{ hasSchoolLogo }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ clearSchoolLogo }}" style="background:#fff;border:1px solid #d5d5d5;color:#5c686d;border-radius:99px;min-height:42px;padding:0 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">إزالة الشعار</button>
+                </sc-if>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ onSchoolSetupSave }}" style="background:#05623c;color:#fff;border:none;border-radius:99px;min-height:44px;padding:0 24px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">حفظ</button>
+              </div>
+            </div>
+          </sc-if>
           <div style="border-radius:26px;overflow:hidden;background:linear-gradient(115deg,#351375 0%,#3d7eb9 48%,#0da9a6 100%);position:relative;padding:44px 46px;color:#fff">
             <div style="position:absolute;inset-inline-end:-90px;top:-120px;width:340px;height:210px;border:2px solid rgba(255,255,255,.28);border-radius:999px;transform:rotate(-45deg)"></div>
             <div style="position:relative;max-width:760px">
@@ -374,7 +426,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#7c8589;font-weight:700;letter-spacing:.02em">{{ previewLabel }}</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="{{ pageStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="{{ pageStyle }}">
                   <div style="display:grid;grid-template-columns:190px minmax(0,1fr) 190px;align-items:center;gap:10px">
                     <div style="display:flex;justify-content:flex-start;align-items:center">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:15px;font-weight:700;line-height:1.55;color:#15445a">
@@ -496,7 +548,8 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                   </div>
                   </sc-if>
                   <div style="text-align:center;font-size:11px;color:#9aa2a6;padding-bottom:14px">مسودة أُعدّت بمنصة تمهيد — للتحضير والصياغة، ويُعتمد التوثيق الرسمي في نظام نور.</div>
-                </div>
+                
+</div>
               </div>
             </div>
           </div>
@@ -718,7 +771,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="{{ examPageStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="{{ examPageStyle }}">
                   <sc-if value="{{ examLetterhead }}" hint-placeholder-val="{{ true }}">
                     <div style="display:flex;align-items:center;gap:14px">
                       <div style="width:88px;flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start">
@@ -817,7 +870,8 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                   </div>
 
 
-                </div>
+                
+</div>
               </div>
             </div>
           </div>
@@ -932,7 +986,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="{{ planPageStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="{{ planPageStyle }}">
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px">
                     <img src="assets/logo/moe-logo-trimmed.png" alt="وزارة التعليم" style="height:64px;object-fit:contain">
                     <div style="text-align:center;font-size:12.5px;line-height:1.85;color:#15445a;font-weight:700">
@@ -996,10 +1050,18 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                       <div style="font-size:14px;opacity:.9">{{ planPrincipalName }}</div>
                     </div>
                   </div>
-                </div>
+                
+</div>
               </div>
             </div>
           </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasVariantSwitch }}" hint-placeholder-val="{{ false }}">
+        <div data-tm-chrome="1" style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:14px 18px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px">
+          {{ variantSwitch }}
+          <span style="font-size:12px;line-height:1.8;color:#5c686d">{{ variantHint }}</span>
         </div>
       </sc-if>
 
@@ -1256,6 +1318,55 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                       </div>
                     </div>
                   </div>
+                
+</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isRulesView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;align-items:start">
+          <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:16px">
+            <sc-if value="{{ rulesHasChooser }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <label style="font-size:13px;font-weight:700;color:#5c686d">النموذج</label>
+                {{ rulesChooser }}
+              </div>
+            </sc-if>
+            {{ rulesForm }}
+            <div style="border-top:1px solid #e8eaeb;padding-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <button onClick="{{ exportPdf }}" style="background:#05623c;color:#fff;border:none;border-radius:99px;min-height:44px;padding:0 24px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">تنزيل النموذج PDF</button>
+              <sc-if value="{{ rulesCanClear }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ onRulesClear }}" style="background:#fff;color:#5c686d;border:1px solid #d5d5d5;border-radius:99px;min-height:44px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">مسح الحقول</button>
+              </sc-if>
+            </div>
+          </div>
+
+          <div ref="{{ panelRef }}" data-print-panel="1" style="display:flex;flex-direction:column;align-items:center;gap:10px;background:#eef2f4;box-shadow:inset 0 0 0 1px #e0e6e9;border-radius:20px;padding:16px;overflow:hidden">
+            <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
+            <div data-print-box="1" style="{{ boxStyle }}">
+              <div data-print-scale="1" style="{{ scaleStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:24px 40px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                  <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
+                    <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
+                    <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
+                      <div>المملكة العربية السعودية</div>
+                      <div>وزارة التعليم</div>
+                      <div>الإدارة العامة للتعليم {{ examRegionText }}</div>
+                      <div>{{ examSchool }}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:flex-end">{{ refSchoolLogoImg }}</div>
+                  </div>
+                  <div style="height:0;border-top:2px solid #15445a;border-bottom:1px solid #15445a;padding-top:2px"></div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 6px">
+                    <sc-if value="{{ rulesHasSecret }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:16px;font-weight:700;color:#8a2325">{{ rulesSecret }}</div>
+                    </sc-if>
+                    <div style="font-size:20px;font-weight:700;color:#15445a;text-align:center;line-height:1.5;max-width:620px">{{ rulesTitle }}</div>
+                  </div>
+                  {{ rulesSheet }}
                 </div>
               </div>
             </div>
@@ -1394,7 +1505,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:8px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:8px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
                     <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
@@ -1475,7 +1586,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                   <div style="border:1px solid #15445a;display:flex;flex-direction:column">
                     <div style="padding:7px 12px;display:flex;flex-direction:column;gap:1px">
                       <sc-for list="{{ cItems }}" as="it" hint-placeholder-count="11">
-                        <div style="display:grid;grid-template-columns:12px minmax(0,1fr);align-items:start;gap:8px;font-size:14px;line-height:1.5">
+                        <div style="{{ cItemRowStyle }}">
                           <span style="{{ it.boxStyle }}">{{ it.mark }}</span>
                           <span style="display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center">
                             <span>{{ it.text }}</span>
@@ -1494,16 +1605,12 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     </div>
                   </div>
 
-                  <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:4px;padding-bottom:60px;font-size:15px;font-weight:700;color:#15445a">
+                  <div style="{{ cSignStyle }}">
                     <div style="display:flex;align-items:center;gap:8px"><span style="{{ cAckRing }}"></span>أنا ولي أمر الطالب اطلعت وسوف أكون مشارك في حل المشكلة..</div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-end">
                       <span>التوقيع/</span>
                       <span>التوجيه الطلابي</span>
                     </div>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:10px;margin-top:-30px">
-                    <span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span>
-                    <img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" />
                   </div>
                 </div>
               </div>
@@ -1650,7 +1757,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;background:#fff;padding:24px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
                     <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
@@ -1733,7 +1840,8 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     <div style="display:flex;flex-direction:column;gap:14px"><span>ولي أمر الطالب</span><span>التوقيع/</span></div>
                     <div style="display:flex;flex-direction:column;gap:14px;align-items:center"><span>الموجّه الطلابي</span><span>التوقيع/</span></div>
                   </div>
-                </div>
+                
+</div>
               </div>
             </div>
           </div>
@@ -1743,12 +1851,12 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
       <sc-if value="{{ isHasr }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:16px;max-width:1040px">
           <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px">
-            <p style="margin:0;font-size:13.5px;line-height:1.95;color:#5c686d;text-wrap:pretty">نزّل النموذج الفارغ، وعبّئه ببيانات نماذج الحصر في Excel، ثم احفظه بصيغة CSV UTF-8 وارفعه هنا ليُبنى التقرير.</p>
+            <p style="margin:0;font-size:13.5px;line-height:1.95;color:#5c686d;text-wrap:pretty">نزّل النموذج الفارغ، وعبّئه ببيانات نماذج الحصر في Excel، ثم ارفعه هنا كما هو ليُبنى التقرير. يُقبل ملف Excel أو CSV.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button onClick="{{ onHasrTemplate }}" style="background:#fff;color:#15445a;border:1px solid #15445a;border-radius:99px;min-height:42px;padding:0 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">تنزيل نموذج فارغ</button>
               <label style="display:inline-flex;align-items:center;background:#15445a;color:#fff;border-radius:99px;min-height:42px;padding:0 22px;font-size:13px;font-weight:700;cursor:pointer">
                 رفع ملف الطلاب
-                <input type="file" accept=".csv,text/csv" onChange="{{ onHasrFile }}" style="display:none" />
+                <input type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange="{{ onHasrFile }}" style="display:none" />
               </label>
               <sc-if value="{{ hasrLoaded }}" hint-placeholder-val="{{ false }}">
                 <span style="font-size:12.5px;font-weight:700;color:#15445a">{{ hasrFileLabel }}</span>
@@ -1850,68 +1958,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
               </div>
             </sc-if>
           </sc-if>
-        </div>
-      </sc-if>
-
-      <sc-if value="{{ isAbsence }}" hint-placeholder-val="{{ false }}">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start;max-width:980px">
-          <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:16px">
-            <p style="margin:0;font-size:13.5px;line-height:1.95;color:#5c686d;text-wrap:pretty">حدّد نوع الغياب وعدد الأيام ليظهر الإجراء النظامي المقابل وخطاب ولي الأمر.</p>
-
-            <div style="display:flex;flex-direction:column;gap:9px">
-              <label style="font-size:13px;font-weight:700;color:#5c686d">نوع الغياب</label>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <sc-for list="{{ absExcuses }}" as="e" hint-placeholder-count="2">
-                  <button onClick="{{ e.onClick }}" style="{{ e.style }}">{{ e.label }}</button>
-                </sc-for>
-              </div>
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:9px">
-              <label style="font-size:13px;font-weight:700;color:#5c686d">عدد أيام الغياب</label>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <sc-for list="{{ absTiers }}" as="t" hint-placeholder-count="3">
-                  <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
-                </sc-for>
-              </div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
-              <div style="display:flex;flex-direction:column;gap:7px">
-                <label style="font-size:13px;font-weight:700;color:#5c686d">اسم الطالب</label>
-                <input value="{{ absStudent }}" onChange="{{ onAbsStudent }}" placeholder="اسم الطالب" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
-              </div>
-              <div style="display:flex;flex-direction:column;gap:7px">
-                <label style="font-size:13px;font-weight:700;color:#5c686d">اسم ولي الأمر</label>
-                <input value="{{ absGuardian }}" onChange="{{ onAbsGuardian }}" placeholder="اختياري" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
-              </div>
-            </div>
-
-            <sc-if value="{{ absSafetyShown }}" hint-placeholder-val="{{ false }}">
-              <div style="background:#e4f0f5;border:1px solid #b8d4e0;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:7px">
-                <span style="font-size:12.5px;font-weight:700;color:#15445a">مسار الإبلاغ عند الاشتباه بالإهمال</span>
-                <span style="font-size:12.5px;line-height:1.9;color:#22333a">تُخاطَب الجهات ذات الاختصاص لحماية الطفل وتُشعَر إدارة التعليم. خط مساندة الطفل: <a href="tel:116111" style="font-weight:700;color:#15445a">116111</a></span>
-              </div>
-            </sc-if>
-          </div>
-
-          <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px">
-            <span style="{{ absHeadStyle }}">{{ absHeading }}</span>
-            <div style="display:flex;flex-direction:column;gap:11px">
-              <sc-for list="{{ absSteps }}" as="st" hint-placeholder-count="5">
-                <div style="display:flex;gap:10px;align-items:flex-start">
-                  <span style="{{ st.dotStyle }}"></span>
-                  <span style="font-size:13.5px;line-height:1.95;color:#22333a">{{ st.text }}</span>
-                </div>
-              </sc-for>
-            </div>
-
-            <div style="border-top:1px solid #e8eaeb;padding-top:14px;display:flex;flex-direction:column;gap:11px">
-              <span style="font-size:12.5px;font-weight:700;color:#5c686d">خطاب ولي الأمر</span>
-              <pre style="margin:0;background:#f6f8f9;border-radius:14px;padding:14px 16px;font-family:inherit;font-size:13px;line-height:2;color:#22333a;white-space:pre-wrap">{{ absLetter }}</pre>
-              <button onClick="{{ onAbsCopy }}" style="align-self:flex-start;background:#15445a;color:#fff;border:none;border-radius:99px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">{{ absCopyLabel }}</button>
-            </div>
-          </div>
         </div>
       </sc-if>
 
@@ -2114,7 +2160,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:22px 38px 26px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:16px 34px 18px;display:flex;flex-direction:column;gap:6px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:190px minmax(0,1fr) 190px;align-items:center;gap:10px">
                     <div style="display:flex;justify-content:flex-start;align-items:center">{{ refMoeLogoImg }}</div>
                     <div style="text-align:center;font-size:14px;font-weight:700;line-height:1.45;color:#15445a">
@@ -2219,7 +2265,8 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     <span>الموجّه الطلابي <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ cpCounselor }}</span></span>
                     <span style="padding-inline-end:40px">مدير المدرسة <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ principalName }}</span></span>
                   </div>
-                </div>
+                
+</div>
               </div>
             </div>
           </div>
@@ -2405,7 +2452,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
-                <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:22px 38px 26px;display:flex;flex-direction:column;gap:10px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:22px 38px 26px;display:flex;flex-direction:column;gap:10px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
                   <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:12px">
                     <div style="display:flex;justify-content:flex-start">{{ moeLogoImg }}</div>
                     <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.45;color:#15445a">
@@ -2500,7 +2547,8 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     <span>الموجّه الطلابي <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ fCounselorPrint }}</span></span>
                     <span style="padding-inline-end:40px">مدير المدرسة <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ principalName }}</span></span>
                   </div>
-                </div>
+                
+</div>
               </div>
             </div>
           </div>
@@ -2740,117 +2788,108 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                 <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
                 <div data-print-box="1" style="{{ boxStyle }}">
                   <div data-print-scale="1" style="{{ scaleStyle }}">
-                    <div ref="{{ pageRef }}" data-print-page="1" style="width:794px;min-height:1123px;background:#fff;padding:46px 54px;display:flex;flex-direction:column;gap:22px;box-shadow:0 20px 50px rgba(0,56,69,.18)">
-
-                      <div style="display:flex;align-items:center;justify-content:flex-start;gap:16px">
-                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px">
-                          <span style="display:block;height:8px;width:54px;border-radius:99px;background:linear-gradient(90deg,#218caa,#0da9a6)"></span>
-                          <span style="display:block;height:8px;width:36px;border-radius:99px;background:#0da9a6"></span>
-                          <span style="display:block;height:8px;width:20px;border-radius:99px;background:#5fdda9"></span>
+                    <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;background:#fff;padding:22px 38px 20px;display:flex;flex-direction:column;gap:9px;box-sizing:border-box;box-shadow:0 20px 50px rgba(0,56,69,.18)">
+                      <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 160px;align-items:center;gap:14px">
+                        <div style="display:flex;align-items:center;justify-content:flex-start">{{ refMoeLogoImg }}</div>
+                        <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.5;color:#15445a">
+                          <div>المملكة العربية السعودية</div>
+                          <div>وزارة التعليم</div>
+                          <div>الإدارة العامة للتعليم {{ examRegionText }}</div>
+                          <div>{{ examSchool }}</div>
                         </div>
-                        <img src="assets/logo/tamheed-mark.png" alt="تمهيد" style="height:78px;object-fit:contain;display:block" />
+                        <div style="display:flex;align-items:center;justify-content:flex-end">{{ refSchoolLogoImg }}</div>
+                      </div>
+                      <div style="height:0;border-top:2px solid #15445a;border-bottom:1px solid #15445a;padding-top:2px"></div>
+
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                        <div style="font-size:20px;font-weight:700;color:#15445a">{{ reportPageTitle }}</div>
+                        <div style="font-size:13px;color:#5c686d">{{ reportPageSub }}</div>
                       </div>
 
-                      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-                        <div style="font-size:22px;font-weight:700;color:#15445a">{{ reportPageTitle }}</div>
-                        <div style="font-size:14px;color:#5c686d">{{ reportPageSub }}</div>
-                        <div style="height:3px;width:120px;background:#0da9a6;border-radius:99px"></div>
-                      </div>
-
-                      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;border:1px solid #e0e6e9;border-radius:14px;padding:16px 18px">
-                        <div style="display:flex;flex-direction:column;gap:5px">
-                          <span style="font-size:11.5px;color:#6b7480;font-weight:700">اسم الطالب</span>
-                          <span style="font-size:14px;font-weight:700;color:#15445a">{{ reportName }}</span>
+                      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;border:1px solid #15445a">
+                        <div style="display:flex;flex-direction:column">
+                          <div style="background:#15445a;color:#fff;font-weight:700;font-size:13px;padding:3px 8px;text-align:center">اسم الطالب</div>
+                          <div style="padding:4px 8px;font-size:14px;font-weight:700;color:#15445a;text-align:center">{{ reportName }}</div>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:5px">
-                          <span style="font-size:11.5px;color:#6b7480;font-weight:700">الصف</span>
-                          <span style="font-size:14px;color:#22333a">{{ reportClass }}</span>
+                        <div style="display:flex;flex-direction:column;border-inline-start:1px solid #15445a">
+                          <div style="background:#15445a;color:#fff;font-weight:700;font-size:13px;padding:3px 8px;text-align:center">الصف</div>
+                          <div style="padding:4px 8px;font-size:14px;text-align:center">{{ reportClass }}</div>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:5px">
-                          <span style="font-size:11.5px;color:#6b7480;font-weight:700">التاريخ</span>
-                          <span style="font-size:14px;color:#22333a">{{ reportDate }}</span>
+                        <div style="display:flex;flex-direction:column;border-inline-start:1px solid #15445a">
+                          <div style="background:#15445a;color:#fff;font-weight:700;font-size:13px;padding:3px 8px;text-align:center">التاريخ</div>
+                          <div style="padding:4px 8px;font-size:14px;text-align:center">{{ reportDate }}</div>
                         </div>
                       </div>
 
                       <sc-if value="{{ reportStudentMode }}" hint-placeholder-val="{{ false }}">
-                        <div style="display:flex;flex-direction:column;gap:20px">
-                          <p style="margin:0;font-size:14.5px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ reportStudentOpening }}</p>
+                        <div style="display:flex;flex-direction:column;gap:8px">
+                          <p style="margin:0;font-size:13.5px;line-height:1.8;color:#22333a;text-wrap:pretty">{{ reportStudentOpening }}</p>
                           <sc-for list="{{ reportStudentBlocks }}" as="b" hint-placeholder-count="2">
-                            <div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #e0e6e9;padding-top:18px">
-                              <span style="font-size:16px;font-weight:700;color:#15445a">{{ b.heading }}</span>
-                              <p style="margin:0;font-size:14.5px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ b.lead }}</p>
+                            <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid #d5dde1;padding-top:7px">
+                              <span style="font-size:14.5px;font-weight:700;color:#15445a">{{ b.heading }}</span>
+                              <p style="margin:0;font-size:13.5px;line-height:1.75;color:#22333a;text-wrap:pretty">{{ b.lead }}</p>
                               <sc-if value="{{ b.chipsShown }}" hint-placeholder-val="{{ true }}">
-                                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap">
                                   <sc-for list="{{ b.chips }}" as="c" hint-placeholder-count="3">
                                     <span style="{{ c.style }}">{{ c.label }}</span>
                                   </sc-for>
                                 </div>
                               </sc-if>
-                              <p style="margin:0;font-size:14px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ b.body }}</p>
+                              <p style="margin:0;font-size:13px;line-height:1.75;color:#22333a;text-wrap:pretty">{{ b.body }}</p>
                               <sc-if value="{{ b.exShown }}" hint-placeholder-val="{{ true }}">
-                                <div style="display:flex;flex-direction:column;gap:9px;background:#f6f8f9;border-radius:14px;padding:14px 16px">
-                                  <span style="font-size:12px;font-weight:700;color:#5c686d">{{ b.exTitle }}</span>
-                                  <div style="display:flex;gap:7px;flex-wrap:wrap">
-                                    <sc-for list="{{ b.examples }}" as="ex" hint-placeholder-count="6">
-                                      <span style="background:#fff;border:1px solid #dde7ea;border-radius:99px;padding:6px 12px;font-size:12px;color:#15445a">{{ ex.label }}</span>
-                                    </sc-for>
-                                  </div>
+                                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;background:#f6f8f9;border-radius:8px;padding:6px 10px">
+                                  <span style="font-size:11.5px;font-weight:700;color:#5c686d;margin-inline-end:4px">{{ b.exTitle }}</span>
+                                  <sc-for list="{{ b.examples }}" as="ex" hint-placeholder-count="6">
+                                    <span style="background:#fff;border:1px solid #dde7ea;border-radius:99px;padding:2px 9px;font-size:11px;color:#15445a">{{ ex.label }}</span>
+                                  </sc-for>
                                 </div>
                               </sc-if>
                             </div>
                           </sc-for>
-                          <p style="margin:0;border-top:1px solid #e0e6e9;padding-top:18px;font-size:14px;line-height:2.05;color:#22333a;text-wrap:pretty">{{ reportStudentClosing }}</p>
+                          <p style="margin:0;border-top:1px solid #d5dde1;padding-top:7px;font-size:13px;line-height:1.75;color:#22333a;text-wrap:pretty">{{ reportStudentClosing }}</p>
                         </div>
                       </sc-if>
 
                       <sc-if value="{{ reportCounsellorMode }}" hint-placeholder-val="{{ true }}">
                       <sc-for list="{{ reportSections }}" as="sec" hint-placeholder-count="2">
-                        <div style="display:flex;flex-direction:column;gap:14px;border-top:1px solid #e0e6e9;padding-top:18px">
-                          <span style="font-size:15px;font-weight:700;color:#15445a">{{ sec.title }}</span>
+                        <div style="display:flex;flex-direction:column;gap:6px;border:1px solid #d5dde1;border-radius:8px;padding:7px 10px">
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                            <span style="font-size:14.5px;font-weight:700;color:#15445a">{{ sec.title }}</span>
+                            <sc-if value="{{ sec.isTop }}" hint-placeholder-val="{{ true }}">
+                              <span style="display:flex;align-items:baseline;gap:8px"><span style="font-size:19px;font-weight:700;color:#15445a;letter-spacing:2px">{{ sec.code }}</span><span style="font-size:12px;color:#5c686d">{{ sec.codeNames }}</span></span>
+                            </sc-if>
+                            <sc-if value="{{ sec.isSum }}" hint-placeholder-val="{{ false }}">
+                              <span style="display:flex;align-items:center;gap:8px"><span style="{{ sec.bandStyle }}">{{ sec.bandText }}</span><span style="font-size:12px;color:#5c686d">{{ sec.scoreText }}</span></span>
+                            </sc-if>
+                          </div>
 
-                          <sc-if value="{{ sec.isTop }}" hint-placeholder-val="{{ true }}">
-                            <div style="display:flex;flex-direction:column;gap:7px;background:#f6f8f9;border-radius:14px;padding:16px 18px">
-                              <span style="font-size:26px;font-weight:700;color:#15445a;letter-spacing:2px">{{ sec.code }}</span>
-                              <span style="font-size:13.5px;color:#5c686d">{{ sec.codeNames }}</span>
-                            </div>
-                          </sc-if>
-                          <sc-if value="{{ sec.isSum }}" hint-placeholder-val="{{ false }}">
-                            <div style="display:flex;align-items:center;gap:12px;background:#f6f8f9;border-radius:14px;padding:16px 18px">
-                              <span style="{{ sec.bandStyle }}">{{ sec.bandText }}</span>
-                              <span style="font-size:13.5px;color:#5c686d">{{ sec.scoreText }}</span>
-                            </div>
-                          </sc-if>
-
-                          <div style="display:flex;flex-direction:column;gap:10px">
+                          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 22px">
                             <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="6">
-                              <div style="display:flex;align-items:center;gap:12px">
+                              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
                                 <span style="{{ row.nameStyle }}">{{ row.name }}</span>
-                                <span style="flex:1;height:9px;background:#eef2f4;border-radius:99px;overflow:hidden;display:block">
+                                <span style="flex:1;height:7px;background:#eef2f4;border-radius:99px;overflow:hidden;display:block">
                                   <span style="{{ row.fillStyle }}"></span>
                                 </span>
-                                <span style="font-size:12px;color:#5c686d;width:62px;text-align:left;flex:0 0 auto">{{ row.value }}</span>
+                                <span style="font-size:11.5px;color:#5c686d;width:40px;text-align:left;flex:0 0 auto">{{ row.value }}</span>
                               </div>
                             </sc-for>
                           </div>
 
                           <sc-for list="{{ sec.notes }}" as="n" hint-placeholder-count="2">
-                            <div style="border:1px solid #e0e6e9;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:9px">
-                              <span style="{{ n.kindStyle }}">{{ n.kindLabel }}</span>
-                              <span style="font-size:13.5px;line-height:1.95;color:#22333a">{{ n.text }}</span>
+                            <div style="border-top:1px solid #eef2f4;padding-top:5px;display:flex;flex-direction:column;gap:4px">
+                              <div style="display:flex;align-items:flex-start;gap:8px">
+                                <span style="{{ n.kindStyle }}">{{ n.kindLabel }}</span>
+                                <span style="font-size:12.5px;line-height:1.7;color:#22333a;flex:1">{{ n.text }}</span>
+                              </div>
                               <sc-if value="{{ n.hasStudentText }}" hint-placeholder-val="{{ false }}">
-                                <div style="background:#f6f8f9;border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:5px">
-                                  <span style="font-size:11px;font-weight:700;color:#5c686d">صيغة تُقال للطالب</span>
-                                  <span style="font-size:13px;line-height:1.95;color:#22333a">{{ n.studentText }}</span>
-                                </div>
+                                <div style="background:#f6f8f9;border-radius:8px;padding:5px 10px;font-size:12px;line-height:1.7;color:#22333a"><b style="color:#5c686d">صيغة تُقال للطالب: </b>{{ n.studentText }}</div>
                               </sc-if>
                               <sc-if value="{{ n.hasExamples }}" hint-placeholder-val="{{ true }}">
-                                <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #eef2f4;padding-top:10px">
-                                  <span style="font-size:11.5px;font-weight:700;color:#5c686d">أمثلة للنقاش</span>
-                                  <div style="display:flex;gap:6px;flex-wrap:wrap">
-                                    <sc-for list="{{ n.examples }}" as="ex" hint-placeholder-count="8">
-                                      <span style="background:#eef4f6;border:1px solid #dde7ea;border-radius:99px;padding:5px 11px;font-size:11.5px;color:#15445a">{{ ex.label }}</span>
-                                    </sc-for>
-                                  </div>
+                                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px">
+                                  <span style="font-size:11.5px;font-weight:700;color:#5c686d;margin-inline-end:4px">أمثلة للنقاش:</span>
+                                  <sc-for list="{{ n.examples }}" as="ex" hint-placeholder-count="8">
+                                    <span style="background:#eef4f6;border:1px solid #dde7ea;border-radius:99px;padding:1px 8px;font-size:11px;color:#15445a">{{ ex.label }}</span>
+                                  </sc-for>
                                 </div>
                               </sc-if>
                             </div>
@@ -2859,15 +2898,15 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                       </sc-for>
                       </sc-if>
 
-                      <div style="font-size:11.5px;line-height:1.9;color:#5c686d;background:#f6f8f9;border-radius:12px;padding:12px 14px">هذا التقرير أداة استرشادية للنقاش بين الطالب وموجّهه الطلابي، ولا يحدد قراراً نهائياً وحده. وبنود الاستبانة غير مقنّنة.</div>
+                      <div style="font-size:11px;line-height:1.7;color:#5c686d">هذا التقرير أداة استرشادية للنقاش بين الطالب وموجّهه الطلابي، ولا يحدد قراراً نهائياً وحده. وبنود الاستبانة غير مقنّنة.</div>
 
-                      <div style="margin-top:auto;padding-bottom:20px;display:flex;justify-content:flex-end;color:#15445a">
-                        <div style="display:flex;flex-direction:column;gap:7px;align-items:center;min-width:210px">
+                      <div style="margin-top:auto;display:flex;justify-content:flex-end;color:#15445a">
+                        <div style="display:flex;flex-direction:column;gap:4px;align-items:center;min-width:210px">
                           <div style="font-size:13.5px;font-weight:700">الموجّه الطلابي</div>
-                          <div style="font-size:14px;opacity:.9">{{ reportUser }}</div>
+                          <div style="font-size:14px">{{ reportUser }}</div>
+                          <div style="font-size:13px;color:#22333a">التوقيع: ...........................</div>
                         </div>
                       </div>
-
                     </div>
                   </div>
                 </div>
@@ -2945,7 +2984,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
               <div>
                 <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">المرحلة الحالية</div>
-                <div style="font-size:14.5px;line-height:2;color:rgba(255,255,255,.8)">أداة استخدام شخصي للمرشد الطلابي المكلّف بثانوية الإمام محمد بن سعود بالدمام.</div>
+                <div style="font-size:14.5px;line-height:2;color:rgba(255,255,255,.8)">{{ aboutPersonalLine }}</div>
               </div>
               <div>
                 <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">المرحلة المستقبلية</div>
@@ -3010,7 +3049,6 @@ class Component extends DCLogic {
   LETTER_TOPICS = {
     'إشعار بانخفاض المستوى الدراسي': 'نودّ إحاطتكم بأن مستوى ابنكم الدراسي قد انخفض في عدد من المواد خلال الفترة الحالية، وقد تم عقد جلسة إرشادية معه لبحث الأسباب والاتفاق على خطة للمعالجة.',
     'إشعار بالغياب المتكرر': 'نودّ إحاطتكم بتكرار غياب ابنكم عن الدراسة خلال الفترة الحالية، وما لذلك من أثر على تحصيله ومواقفه النظامية، وقد تمت مناقشته في ذلك.',
-    'دعوة لمقابلة الموجّه الطلابي': 'نأمل حضوركم لمقابلة وحدة التوجيه والإرشاد لمناقشة ما يتعلق بابنكم، والاتفاق على ما يخدم مصلحته الدراسية والسلوكية.',
     'شكر على تحسن الطالب': 'يسرّنا إشعاركم بما لمسناه من تحسن ملحوظ في مستوى ابنكم وسلوكه خلال الفترة الحالية، ونثمّن متابعتكم وتعاونكم.',
     'إشعار بموقف سلوكي': 'نودّ إحاطتكم بموقف سلوكي حدث من ابنكم داخل المدرسة، وقد تم التعامل معه وفق اللائحة، وعُقدت معه جلسة إرشادية.'
   };
@@ -3027,7 +3065,7 @@ class Component extends DCLogic {
     { category: 'جلسة فردية', title: 'الطالب المتأخر دراسياً', body: 'نقاط حديث وأسئلة جاهزة لجلسة تشخيص أسباب الانخفاض والاتفاق على خطة مذاكرة.', tool: 'session', preset: { caseType: 'تأخر دراسي' } },
     { category: 'جلسة فردية', title: 'قلق الاختبارات', body: 'مسار جلسة لتخفيف القلق وتزويد الطالب بأساليب عملية للتهيئة.', tool: 'session', preset: { caseType: 'قلق الاختبارات' } },
     { category: 'جلسة جماعية', title: 'مهارات تنظيم الوقت', body: 'محاور لقاء جماعي لبناء جدول أسبوعي واقعي وتقليل المشتتات.', tool: 'session', preset: { caseType: 'مهارات تنظيم الوقت', kind: 'جماعية' } },
-    { category: 'محضر', title: 'محضر اجتماع لجنة التوجيه الطلابي', body: 'قالب محضر رسمي: جدول الأعمال، الحاضرون، ما دار في الاجتماع، القرارات والتوصيات والمسؤول عنها.', tool: 'minutes', preset: {} },
+    { category: 'محضر', title: 'محضر اجتماع لجنة التوجيه الطلابي', body: 'النموذج المعتمد في دليل قواعد السلوك: عناصر الاجتماع، ووصف المشكلة وتصنيفها، وقرارات اللجنة، وأعضاؤها.', tool: 'minutes', preset: {} },
     { category: 'مراسلات', title: 'إشعار ولي أمر بالغياب المتكرر', body: 'صيغة رسمية مختصرة تُذكر فيها الآثار النظامية وطلب المتابعة.', tool: 'letter', preset: { topic: 'إشعار بالغياب المتكرر' } },
     { category: 'مراسلات', title: 'شكر ولي أمر على تحسن الطالب', body: 'رسالة تقدير قصيرة تُعزّز التعاون بين المدرسة والأسرة.', tool: 'letter', preset: { topic: 'شكر على تحسن الطالب' } },
     { category: 'برامج', title: 'نشرة الاستعداد للاختبارات', body: 'هدف ومحاور جاهزة لنشرة أو لقاء توعوي قبل الاختبارات.', tool: 'program', preset: { kind: 'الاستعداد للاختبارات' } },
@@ -3042,9 +3080,15 @@ class Component extends DCLogic {
     consentDate: '',
     policyOpen: false,
     dataNotice: '',
-    form: { name: '', role: 'الموجّه الطلابي', school: 'ثانوية الإمام محمد بن سعود بالدمام', password: '', confirm: '' },
+    form: { name: '', role: 'الموجّه الطلابي', school: '', password: '', confirm: '' },
     section: 'home',
     menuOpen: false,
+    saveError: false,
+    createdAt: '',
+    lastBackup: '',
+    backupSnoozed: false,
+    schoolSetupDone: false,
+    schoolSetupOpen: false,
     zoom: 0.8,
     panelW: 0,
     gridW: 0,
@@ -3078,7 +3122,7 @@ class Component extends DCLogic {
       hy: 1448, hm: 3, hd: 1,
       days: [0, 1, 2, 3, 4], weeks: 2, twoPerDay: false,
       region: 'بالمنطقة الشرقية',
-      school: 'مدرسة الإمام محمد بن سعود الثانوية',
+      school: '',
       subjects: ['القرآن الكريم', 'اللغة العربية', 'الرياضيات', 'الفيزياء', 'الكيمياء', 'الأحياء', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
       subjectsByGrade: {
         'أول ثانوي': ['القرآن الكريم', 'اللغة العربية', 'الرياضيات', 'الفيزياء', 'الكيمياء', 'الأحياء', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
@@ -3436,7 +3480,7 @@ class Component extends DCLogic {
     const next = Object.assign({}, this.caseState(), patch);
     this._case = next;
     this.setState({ caseStudy: next });
-    try { localStorage.setItem(this.CASE_KEY, JSON.stringify(next)); } catch (e) {}
+    this.safeSave(this.CASE_KEY, next);
   }
 
   caseVals() {
@@ -3574,7 +3618,7 @@ class Component extends DCLogic {
     const next = Object.assign({}, this.followState(), patch);
     this._follow = next;
     this.setState({ follow: next });
-    try { localStorage.setItem(this.FOLLOW_KEY, JSON.stringify(next)); } catch (e) {}
+    this.safeSave(this.FOLLOW_KEY, next);
   }
 
   followVals() {
@@ -3807,6 +3851,8 @@ class Component extends DCLogic {
         school: prof.school || this.state.form.school, password: '', confirm: ''
       });
       merged.savedUser = prof;
+      if (merged.letter && !this.LETTER_TOPICS[merged.letter.topic]) merged.letter = Object.assign({}, merged.letter, { topic: 'إشعار بانخفاض المستوى الدراسي' });
+      if (!merged.createdAt && merged.passHash) merged.createdAt = new Date().toISOString();
       this.setState(merged);
     }
     if (this.props.startSection) this.setState({ section: this.props.startSection });
@@ -3827,24 +3873,60 @@ class Component extends DCLogic {
       }, 60);
     }
     window.addEventListener('resize', this.measure);
+    this._beforePrint = () => this.setPrintZoom(this.pageRef.current);
+    window.addEventListener('beforeprint', this._beforePrint);
     setTimeout(this.measure, 60);
   }
-  componentWillUnmount() { window.removeEventListener('resize', this.measure); }
+  componentWillUnmount() { window.removeEventListener('resize', this.measure); window.removeEventListener('beforeprint', this._beforePrint); }
   componentDidUpdate() {
     this.measure();
     const s = this.state;
-    try {
-      localStorage.setItem('tamheed.v2', JSON.stringify({
-        section: s.section, session: s.session, minutes: s.minutes,
-        profile: s.user || s.savedUser || null,
-        letter: s.letter, program: s.program, exam: s.exam, plan: s.plan, theme: s.theme, themeMigrated: true, zoom: s.zoom,
-        passHash: s.passHash, consent: s.consent, consentDate: s.consentDate
-      }));
-    } catch (e) {}
+    this.safeSave('tamheed.v2', {
+      section: s.section, session: s.session, minutes: s.minutes,
+      profile: s.user || s.savedUser || null,
+      letter: s.letter, program: s.program, exam: s.exam, plan: s.plan, theme: s.theme, themeMigrated: true, zoom: s.zoom,
+      passHash: s.passHash, consent: s.consent, consentDate: s.consentDate,
+      createdAt: s.createdAt, lastBackup: s.lastBackup, schoolSetupDone: s.schoolSetupDone
+    });
+  }
+
+  // يحفظ في ذاكرة المتصفح؛ إن امتلأت المساحة يُظهر تنبيهًا بدل أن يفشل الحفظ بصمت
+  safeSave(key, value) {
+    let ok = true;
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { ok = false; }
+    if (key === 'tamheed.v2' || !ok) {
+      if (!ok !== !!this.state.saveError) this.setState({ saveError: !ok });
+    }
+    return ok;
+  }
+
+  // يصغّر الصورة قبل حفظها (الشعار) حتى لا تملأ ذاكرة المتصفح
+  shrinkImage(file, max) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onerror = reject;
+      r.onload = () => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const k = Math.min(1, (max || 400) / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * k));
+          c.height = Math.max(1, Math.round(img.height * k));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          let out = c.toDataURL('image/png');
+          if (out.length > 300000) out = c.toDataURL('image/webp', 0.85);
+          resolve(out);
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(file);
+    });
   }
 
   logoImg(src, style) {
-    if (!src) src = this.asset('assets/logo/imam-school-print.png');
+    // بلا شعار مرفوع: مساحة فارغة بالمقاس نفسه حتى لا تختل الترويسة
+    if (!src) return React.createElement('span', { 'aria-hidden': 'true', style: Object.assign({ display: 'inline-block' }, style, { visibility: 'hidden' }) });
     return React.createElement('img', { src: src, alt: 'شعار المدرسة', style: style });
   }
 
@@ -3871,7 +3953,8 @@ class Component extends DCLogic {
       const h = await this.hashPass(f.password);
       const u0 = { name: f.name, role: 'الموجّه الطلابي', school: f.school };
       this.setState({
-        passHash: h, consentDate: this.hijri(new Date()),
+        passHash: h, consentDate: this.hijri(new Date()), createdAt: new Date().toISOString(),
+        exam: Object.assign({}, s.exam, { school: s.exam.school || f.school.trim() }),
         user: u0, savedUser: u0,
         form: Object.assign({}, f, { password: '', confirm: '' }),
         authError: '', section: 'home'
@@ -3899,7 +3982,8 @@ class Component extends DCLogic {
       followup: this.followState(),
       caseStudy: this.caseState(),
       weekly: Object.assign({}, this.weeklyState(), { notice: '' }),
-      surveys: s.surveyRecords
+      surveys: s.surveyRecords,
+      rules: this.rulesState()
     };
     try {
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -3916,7 +4000,7 @@ class Component extends DCLogic {
       } else {
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
-      this.setState({ dataNotice: 'تم تصدير نسخة احتياطية. احفظها في مكان آمن.' });
+      this.setState({ dataNotice: 'تم تصدير نسخة احتياطية. احفظها في مكان آمن.', lastBackup: new Date().toISOString(), backupSnoozed: false });
     } catch (e) {
       this.setState({ dataNotice: 'تعذّر التصدير في هذا المتصفح.' });
     }
@@ -3939,9 +4023,10 @@ class Component extends DCLogic {
         if (d.followup && typeof d.followup === 'object') this.setFollow(d.followup);
         if (d.caseStudy && typeof d.caseStudy === 'object') this.setCase(d.caseStudy);
         if (d.weekly && typeof d.weekly === 'object') this.setWeekly(d.weekly);
+        if (d.rules && typeof d.rules === 'object') this.setRules(Object.assign({ pick: {}, data: {} }, d.rules));
         if (Array.isArray(d.surveys)) {
           patch.surveyRecords = d.surveys;
-          try { localStorage.setItem('tamheed.surveys.v1', JSON.stringify(d.surveys)); } catch (e2) {}
+          this.safeSave('tamheed.surveys.v1', d.surveys);
         }
         patch.dataNotice = 'تم استيراد النسخة بنجاح (' + (d.hijri || '') + ').';
         this.setState(patch);
@@ -3960,7 +4045,7 @@ class Component extends DCLogic {
 
   persistSurveys(next) {
     this.setState({ surveyRecords: next });
-    try { localStorage.setItem('tamheed.surveys.v1', JSON.stringify(next)); } catch (e) {}
+    this.safeSave('tamheed.surveys.v1', next);
   }
 
   surveyDef() {
@@ -4026,6 +4111,549 @@ class Component extends DCLogic {
 
   scrollTopOnPhone() {
     if (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) window.scrollTo(0, 0);
+  }
+
+  // ===== النماذج الرسمية (دليل قواعد السلوك والمواظبة 1448) ونموذج دراسة حالة الغياب =====
+  // كل نموذج يُعرَّف بكتل؛ ويُرسم مرتين: نموذج تعبئة، وورقة A4 بترويسة المنصة.
+  RULES_KEY = 'tamheed.rules.v1';
+
+  RULE_FORMS = (() => {
+    const D = { k: 'date', label: 'التاريخ' };
+    const principal = { t: 'sign', roles: [{ role: 'مدير/مديرة المدرسة' }] };
+    const three = { t: 'sign', roles: [{ role: 'الطالب/الطالبة' }, { role: 'ولي الأمر' }, { role: 'مدير/مديرة المدرسة' }] };
+    const salaam = { t: 'para', text: 'السلام عليكم ورحمة الله وبركاته', align: 'center' };
+    const freq = { t: 'table', k: 'freq', rows: 1, group: { label: 'التكرار', from: 3, span: 5 },
+      cols: [{ h: 'اليوم' }, { h: 'التاريخ' }, { h: 'فترة الملاحظة' }, { h: '1' }, { h: '2' }, { h: '3' }, { h: '4' }, { h: '5' }, { h: 'المجموع' }] };
+    return {
+      commit: {
+        title: 'نموذج الالتزام المدرسي', short: 'الالتزام المدرسي',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/الطالبة' }, { k: 'stage', label: 'المرحلة' }, { k: 'grade', label: 'الصف' },
+            { k: 'gName', label: 'اسم ولي الأمر' }, { k: 'gWork', label: 'العمل' }, { k: 'gWorkPhone', label: 'هاتف العمل' },
+            { k: 'gHome', label: 'هاتف المنزل' }, { k: 'gMobile', label: 'رقم الجوال' }, { k: 'gOther', label: 'رقم آخر' }], hidden: true },
+          { t: 'panel', rows: [
+            { side: 'خاص بالطالب/الطالبة', lines: ['الاسم: {name}', 'المرحلة: {stage}', 'الصف: {grade}',
+              'نعم أنا الطالب/الطالبة الموضح اسمه وبياناته أعلاه. قد اطلعت على محتوى قواعد السلوك والمواظبة. وبناء عليه أتعهد أن ألتزم بالأنظمة والتعليمات الخاصة بقواعد السلوك والمواظبة.',
+              'التوقيع: ................  التاريخ:  /  / 14 هـ'] },
+            { side: 'خاص بولي الأمر', lines: ['نعم أنا ولي أمر الطالب/الطالبة الموضح اسمه وبياناته أعلاه. قد اطلعت على محتوى قواعد السلوك والمواظبة. وبناء عليه أتعهد أن أتعاون مع إدارة المدرسة في سبيل مصلحة ابني/ ابنتي، ليكون ملتزما بالأنظمة والتعليمات الخاصة بقواعد السلوك والمواظبة، وأتحمل مسؤولية صحة أرقام التواصل التالية:',
+              'الاسم: {gName}', 'التوقيع: ................  التاريخ:  /  / 14 هـ', 'العمل: {gWork}    هاتف العمل: {gWorkPhone}',
+              'هاتف المنزل: {gHome}    رقم الجوال: {gMobile}', 'رقم آخر: {gOther}'] }] },
+          { t: 'note', text: 'ملحوظة:\n1. يؤخذ توقيع الطالب وولي الأمر في بداية العام الدراسي.\n2. تحفظ النماذج في ملف خاص لدى وكيل/وكيلة شؤون الطلبة.' }
+        ]
+      },
+      reward: {
+        title: 'نموذج رصد درجات السلوك المتميز', short: 'رصد السلوك المتميز',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/ الطالبة', w: 1 }, { k: 'stage', label: 'المرحلة' }, { k: 'grade', label: 'الصف' }] },
+          { t: 'table', k: 'rows', rows: 8, cols: [{ h: 'موضوع ممارسة السلوك المتميز' }, { h: 'نوع ممارسة السلوك المتميز' }, { h: 'تاريخ التنفيذ' },
+            { h: 'شواهد السلوك المتميز' }, { h: 'الدرجة المكتسبة' }, { h: 'اسم راصد السلوك' }, { h: 'توقيع راصد السلوك', sign: true }] },
+          principal
+        ]
+      },
+      modplan: {
+        title: 'نموذج خطة تعديل السلوك', short: 'خطة تعديل السلوك', dense: true,
+        blocks: [
+          { t: 'heading', text: 'أولاً: البيانات الأولية' },
+          { t: 'fields', cols: 4, items: [{ k: 'name', label: 'اسم الطالب' }, { k: 'grade', label: 'الصف' }, { k: 'cls', label: 'الفصل' },
+            { k: 'birth', label: 'تاريخ الميلاد' }, { k: 'age', label: 'العمر الزمني' }, { k: 'start', label: 'تاريخ البداية' }, { k: 'end', label: 'تاريخ النهاية' }] },
+          { t: 'heading', text: 'ثانياً: تحديد المشكلة السلوكية' },
+          { t: 'fields', cols: 2, items: [{ k: 'problem', label: 'المشكلة السلوكية' }, { k: 'degree', label: 'درجتها' }] },
+          { t: 'area', k: 'desc', label: 'وصف المشكلة السلوكية' },
+          { t: 'area', k: 'signs', label: 'المظاهر السلوكية التي تبدو عند الطالب' },
+          { t: 'heading', text: 'ثالث: قياس شدة أو تكرار السلوك' },
+          freq,
+          { t: 'heading', text: 'رابعاً: تحديد المشكلة السلوكية' },
+          { t: 'qa', items: [{ k: 'q1', label: 'المثيرات القبلية للسلوك: اذكر الأسباب التي تسبب السلوك غير المرغوب فيه من خلال ملاحظتك للسلوك؟' },
+            { k: 'q2', label: 'المثيرات البعدية: ماذا يحدث بعد السلوك غير المرغوب فيه؟' },
+            { k: 'q3', label: 'ما الذي يحققه الطالب/ الطالبة من خلال السلوك غير المرغوب فيه؟' },
+            { k: 'q4', label: 'الإجراءات السابقة التي تم استخدامها للحد من السلوك من قبل المعلم/ المعلمة ؟' }] },
+          { t: 'heading', text: 'خامساً: تصميم خطة تعديل السلوك' },
+          { t: 'area', k: 'target', label: 'تعريف السلوك المرغوب في إكسابه للطالب/ الطالبة إجرائيا.' },
+          { t: 'lines', cols: 2, label: 'الإجراءات المستخدمة للحد من السلوك غير المرغوب فيه وتساعد على تحقيق السلوك المرغوب :',
+            items: ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'].map((n, i) => ({ k: 'p' + i, label: 'الإجراء ' + n })) },
+          { t: 'heading', text: 'متابعة السلوك:' },
+          Object.assign({}, freq, { k: 'follow' }),
+          { t: 'heading', text: 'سادساً: تقييم فاعلية الخطة أو البرنامج:' },
+          { t: 'lines', items: [{ k: 'vAgent', label: 'رأي وكيل/وكيلة المدرسة:' }, { k: 'vTeacher', label: 'رأي معلم/معلمة الفصل:' }, { k: 'vParent', label: 'رأي ولي الأمر:' }] },
+          { t: 'sign', align: 'start', roles: [{ role: 'القائم بتعديل السلوك (معلم/معلمة –موجه طلابي/موجهة طلابية)', k: 'by' }] }
+        ]
+      },
+      teacher: {
+        title: 'نموذج رصد المعلم لمشكلة سلوكية', short: 'رصد المعلم لمشكلة سلوكية',
+        blocks: [
+          { t: 'fields', items: [{ k: 'subject', label: 'المادة', w: 1 }, { k: 'grade', label: 'الصف', w: 1 }] },
+          { t: 'table', k: 'rows', rows: 5, num: true, cols: [{ h: 'م' }, { h: 'اسم الطالب / الطالبة' }, { h: 'المشكلة السلوكية' }, { h: 'درجة المشكلة' },
+            { h: 'الإجراء المتخذ' }, { h: 'مدى الاستجابة' }, { h: 'عدد مرات تكرار المشكلة السلوكية' }, { h: 'التاريخ' }, { h: 'الحصة' }] },
+          { t: 'sign', roles: [{ role: 'المعلم/ المعلمة', k: 'teacher' }] }
+        ]
+      },
+      problems: {
+        title: 'نموذج رصد مشكلة سلوكية', short: 'رصد المشكلات السلوكية',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/ الطالبة', w: 1 }, { k: 'grade', label: 'الصف' }, { k: 'cls', label: 'الفصل' }] },
+          { t: 'table', k: 'rows', rows: 3, tall: true, cols: [{ h: 'المشكلة السلوكية' }, { h: 'نوعها ودرجتها' }, { h: 'تاريخها' }, { h: 'درجات السلوك المحسومة' },
+            { h: 'الإجراءات المتخذة' }, { h: 'تاريخ الإجراء' }, { h: 'توقيع الطالب', sign: true }, { h: 'توقيع ولي الأمر', sign: true }] },
+          { t: 'sign', align: 'center', roles: [{ role: 'مدير/مديرة المدرسة' }] }
+        ]
+      },
+      compensate: {
+        title: 'نموذج فرص تعويض درجات السلوك الإيجابي', short: 'فرص تعويض الدرجات',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/ الطالبة', w: 1 }, { k: 'stage', label: 'المرحلة' }, { k: 'grade', label: 'الصف' }] },
+          { t: 'table', k: 'rows', rows: 3, tall: true, cols: [{ h: 'المشكلة السلوكية' }, { h: 'نوعها ودرجتها' }, { h: 'درجات السلوك المحسومة' },
+            { h: 'فرص التعويض' }, { h: 'الدرجات المكتسبة' }, { h: 'توقيع الطالب', sign: true }] },
+          principal
+        ]
+      },
+      referral: {
+        title: 'إحالة طالب/ـة', short: 'إحالة طالب', secret: 'سري',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/الطالبة' }, { k: 'grade', label: 'الصف' }, { k: 'problem', label: 'المشكلة السلوكية' },
+            { k: 'degree', label: 'الدرجة' }, { k: 'desc', label: 'وصف المشكلة', w: 1 }], hidden: true },
+          { t: 'para', text: 'المكرم الموجه الطلابي / الموجهة الطلابية', bold: true },
+          salaam,
+          { t: 'para', text: 'نحيل إليكم الطالب/الطالبة {name}' },
+          { t: 'para', text: 'بالصف {grade} ذي المشكلة السلوكية {problem} من الدرجة {degree} وهي {desc}' },
+          { t: 'para', text: 'يرجى منكم متابعة الطالب/الطالبة ودراسة حالته/حالتها، ووضع الحلول التربوية والعلاجية المناسبة.' },
+          { t: 'sign', stamp: true, roles: [{ role: 'وكيل/وكيلة شؤون الطلبة', k: 'agent' }] }
+        ]
+      },
+      pledge: {
+        title: 'تعهد سلوكي', short: 'تعهد سلوكي',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/الطالبة' }, { k: 'grade', label: 'الصف' }, { k: 'day', label: 'اليوم' },
+            { k: 'date', label: 'الموافق' }, { k: 'degree', label: 'درجة المشكلة السلوكية' }, { k: 'desc', label: 'وصف المشكلة', w: 1 }], hidden: true },
+          { t: 'para', text: 'أنا الطالب/الطالبة {name}' },
+          { t: 'para', text: 'بالصف {grade}' },
+          { t: 'para', text: 'أنني قمت في يوم {day} الموافق {date}' },
+          { t: 'para', text: 'بمشكلة سلوكية من الدرجة {degree}' },
+          { t: 'para', text: 'وهي {desc}' },
+          { t: 'para', text: 'وأتعهد بعدم تكرار أي مشكلة سلوكية مستقبلاً وعلى ذلك جرى التوقيع.' },
+          three
+        ]
+      },
+      notice: {
+        title: 'إشعار ولي أمر الطالب/الطالبة بمشكلة سلوكية', short: 'إشعار ولي الأمر بمشكلة سلوكية', secret: 'سري',
+        blocks: [
+          { t: 'fields', items: [{ k: 'guardian', label: 'اسم ولي أمر الطالب/الطالبة' }, { k: 'grade', label: 'الصف' }, { k: 'degree', label: 'درجة المشكلة' },
+            { k: 'desc', label: 'وصف المشكلة', w: 1 }, { k: 'a1', label: 'الإجراء 1', w: 1 }, { k: 'a2', label: 'الإجراء 2', w: 1 }, { k: 'a3', label: 'الإجراء 3', w: 1 }], hidden: true },
+          { t: 'para', text: 'المكرم ولي أمر الطالب/الطالبة {guardian}' },
+          { t: 'para', text: 'بالصف: {grade}' },
+          salaam,
+          { t: 'para', text: 'نشعركم بأن الطالب/الطالبة قام/قامت بمشكلة سلوكية من الدرجة {degree}' },
+          { t: 'para', text: 'وهي {desc}' },
+          { t: 'para', text: 'وقد قُررت الإجراءات التالية حياله/حيالها وفق ما ورد في قواعد السلوك والمواظبة:' },
+          { t: 'para', text: '1. {a1}' }, { t: 'para', text: '2. {a2}' }, { t: 'para', text: '3. {a3}' },
+          { t: 'para', text: 'لذا يرجى منكم المتابعة والتعاون مع المدرسة بما يسهم في انضباط سلوك ابنكم/ابنتكم.' },
+          { t: 'sign', stamp: true, noDate: true, roles: [{ role: 'مدير/مديرة المدرسة' }] }
+        ]
+      },
+      invite: {
+        title: 'خطاب دعوة ولي الأمر', short: 'دعوة ولي الأمر',
+        blocks: [
+          { t: 'fields', items: [{ k: 'guardian', label: 'اسم ولي أمر الطالب/الطالبة' }, { k: 'grade', label: 'الصف' }, { k: 'day', label: 'يوم الحضور' },
+            { k: 'date', label: 'الموافق' }, { k: 'purpose', label: 'الهدف من المقابلة', w: 1 }], hidden: true },
+          { t: 'para', text: 'المكرم ولي أمر الطالب/الطالبة {guardian}' },
+          { t: 'para', text: 'بالصف {grade}' },
+          salaam,
+          { t: 'para', text: 'نأمل منكم الحضور إلى المدرسة في يوم {day} الموافق {date}' },
+          { t: 'para', text: 'لمقابلة مدير /مديرة المدرسة، وذلك بهدف {purpose}' },
+          { t: 'para', text: 'شاكرين لكم تعاونكم معنا لتحقيق مصلحة الطالب.', align: 'center' },
+          { t: 'sign', stamp: true, roles: [{ role: 'مدير/مديرة المدرسة' }] },
+          { t: 'para', text: 'رد ولي الأمر:', bold: true },
+          { t: 'para', text: '☐  أقر بالعلم، وسأحضر في الموعد المحدد.' },
+          { t: 'para', text: '☐  أقر بالعلم، وأرغب بتغيير الموعد (خلال نفس الأسبوع)، وذلك في يوم............ الموافق  /  / 14هـ' },
+          { t: 'sign', align: 'center', compact: true, roles: [{ role: '' }] }
+        ]
+      },
+      incident: {
+        title: 'محضر ضبط واقعة', short: 'محضر ضبط الواقعة', secret: 'سري', sensitive: true,
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/ الطالبة', w: 1 }, { k: 'stage', label: 'المرحلة' }, { k: 'grade', label: 'الصف' },
+            { k: 'problem', label: 'المشكلة السلوكية' }, { k: 'degree', label: 'درجتها' }] },
+          { t: 'checks', k: 'evidence', label: 'نوع المشاهدة المضبوطة', opts: ['صور', 'مقاطع فيديو', 'محادثات'], other: 'أخرى' },
+          { t: 'fields', items: [{ k: 'place', label: 'مكان ضبط الواقعة', w: 1 }] },
+          { t: 'heading', text: 'شهود الواقعة :', plain: true },
+          { t: 'table', k: 'witness', rows: 7, num: true, cols: [{ h: 'م' }, { h: 'الاسم' }, { h: 'الوظيفة' }, { h: 'العمل المسند إليه' }, { h: 'التوقيع', sign: true }] },
+          three
+        ]
+      },
+      committee: {
+        title: 'محضر اجتماع لجنة التوجيه الطلابي بالمدرسة', short: 'محضر اجتماع لجنة التوجيه الطلابي',
+        blocks: [
+          { t: 'area', k: 'items', label: 'عناصر الاجتماع:' },
+          { t: 'area', k: 'desc', label: 'وصف المشكلة السلوكية:' },
+          { t: 'area', k: 'cls', label: 'تصنيف المشكلة السلوكية درجة ونوعاً:' },
+          { t: 'area', k: 'decisions', label: 'قرارات اللجنة :', lines: 2 },
+          { t: 'heading', text: 'أعضاء لجنة التوجيه الطلابي', plain: true },
+          { t: 'table', k: 'members', rows: 6, num: true, cols: [{ h: 'م' }, { h: 'اسم العضو المشارك' },
+            { h: 'الوظيفة', fixed: ['وكيل/وكيلة المدرسة لشؤون الطلبة', 'وكيل/وكيلة المدرسة للشؤون التعليمية', 'الموجه الطلابي/الموجهة الطلابية', 'معلم متميز/ معلمة متميزة', 'معلم متميز/ معلمة متميزة', 'معلم متميز/ معلمة متميزة'] },
+            { h: 'العمل المسند إليه', fixed: ['رئيس/رئيسة', 'عضو', 'مقرر/مقررة', 'عضو', 'عضو', 'عضو'] }, { h: 'التوقيع', sign: true }] },
+          principal
+        ]
+      },
+      abuse: {
+        title: 'نموذج إبلاغ عن حالة إيذاء لمركز البلاغات بوزارة الموارد البشرية والتنمية الاجتماعية', short: 'إبلاغ عن حالة إيذاء',
+        secret: '(سري للغاية)', blank: true, sensitive: true,
+        blocks: [
+          { t: 'para', text: 'اليوم: ..................   الساعة: ..................   التاريخ: ..................' },
+          { t: 'kv', head: 'بيانات الحالة المتعرضة للعنف', rows: [['الاسم:', 'العمر:'], ['الحالة الاجتماعية:', 'الجنس:'], ['رقم السجل المدني:', 'الجنسية:'],
+            ['رقم الهاتف:', 'رقم الجوال:'], ['العنوان:'], ['اسم الجهة المبلغة'], ['اسم المبلغ:', 'رقم السجل المدني:'], ['الجنسية:', 'رقم الهاتف:', 'رقم الجوال:'], ['العنوان:']] },
+          { t: 'area', k: 'x1', label: 'ملخص المشكلة:' },
+          { t: 'area', k: 'x2', label: 'أبرز الإجراءات المتخذة:' },
+          { t: 'sign', stamp: 'الختم المدرسي:', roles: [{ role: 'مدير/مديرة المدرسة' }] }
+        ]
+      },
+      highrisk: {
+        title: 'نموذج إبلاغ عن حالة عالية الخطورة', short: 'إبلاغ عن حالة عالية الخطورة', secret: '(سري للغاية)', blank: true, sensitive: true,
+        blocks: [
+          { t: 'fields', items: [{ k: 'x1', label: 'اسم الطالب / الطالبة', w: 1 }, { k: 'x2', label: 'الصف الدراسي', w: 1 }] },
+          { t: 'area', k: 'x3', label: 'وصف الحالة:', lines: 2 },
+          { t: 'fields', items: [{ k: 'x4', label: 'اسم راصد الحالة', w: 1 }, { k: 'x5', label: 'تاريخ الرصد' }, { k: 'x6', label: 'وقت الرصد' }] },
+          { t: 'para', text: 'الإجراءات المتخذة مع الحالة :' },
+          ...['تبليغ إدارة التعليم.', 'تبليغ الجهات الأمنية.', 'تبليغ الحماية من العنف الأسري وحماية الطفل.', 'تبليغ وزارة الصحة.', 'التواصل مع الأسرة لإخطارها بوضع الحالة.',
+            'عقد اجتماع طارئ للجنة التوجيه الطلابي لدراسة الحالة ووضع خطة لمعالجتها بالتكامل مع الجهات ذات العلاقة.', 'رفع بلاغ عن الحالة في الأنظمة التقنية الخاصة بالبلاغات.']
+            .map(x => ({ t: 'para', text: '☐ ' + x })),
+          principal
+        ]
+      },
+      absExcused: {
+        title: 'نموذج إجراءات الغياب بعذر', short: 'الغياب بعذر',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/ الطالبة', w: 1 }, { k: 'stage', label: 'المرحلة' }, { k: 'grade', label: 'الصف' }] },
+          { t: 'table', k: 'rows', rows: 3, tall: true, hint: { col: 1, excuse: 'بعذر', tiers: ['3', '5', '10'] },
+            cols: [{ h: 'عدد أيام الغياب', fixed: ['٣ أيام', '٥ أيام', '١٠ أيام'] }, { h: 'الإجراء المتخذ', wide: true }, { h: 'تاريخ الإجراء' },
+              { h: 'توقيع الطالب', sign: true }, { h: 'توقيع ولي الأمر', sign: true }] },
+          principal
+        ]
+      },
+      absUnexcused: {
+        title: 'نموذج إجراءات الغياب بدون عذر', short: 'الغياب بدون عذر',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/ الطالبة', w: 1 }, { k: 'stage', label: 'المرحلة' }, { k: 'grade', label: 'الصف' }] },
+          { t: 'table', k: 'rows', rows: 4, tall: true, hint: { col: 1, excuse: 'بدون عذر', tiers: ['3', '3', '5', '10'] },
+            cols: [{ h: 'عدد أيام الغياب', fixed: ['٣ أيام', '٣ أيام متصلة', '٥ أيام', '١٠ أيام'] }, { h: 'الإجراء المتخذ', wide: true }, { h: 'تاريخ الإجراء' },
+              { h: 'توقيع الطالب', sign: true }, { h: 'توقيع ولي الأمر', sign: true }, { h: 'عدد درجات المواظبة المحسومة' }] },
+          principal
+        ]
+      },
+      attendPledge: {
+        title: 'تعهد الالتزام بالحضور', short: 'تعهد بالمواظبة',
+        blocks: [
+          { t: 'fields', items: [{ k: 'name', label: 'اسم الطالب/الطالبة' }, { k: 'grade', label: 'الصف' }, { k: 'days', label: 'مدة الغياب (أيام)' }, { k: 'date', label: 'بتاريخ' }], hidden: true },
+          { t: 'para', text: 'أنا الطالب/الطالبة {name}' },
+          { t: 'para', text: 'بالصف {grade}' },
+          { t: 'para', text: 'أنني تغيبت عن الحضور للمدرسة بدون عذر لمدة {days} أيام، بتاريخ {date}' },
+          { t: 'para', text: 'وأتعهد بالالتزام بالخطة التربوية والعلاجية المقدمة لتحسين الحضور، وعلى ذلك جرى التوقيع.' },
+          three
+        ]
+      },
+      absCase: {
+        title: 'نموذج دراسة حالة مختصرة – الغياب دون عذر', short: 'دراسة حالة الغياب', design: 'contact',
+        blocks: [
+          { t: 'grid', items: [{ k: 'name', label: 'اسم الطالب' }, { k: 'gradeSec', label: 'الصف/الشعبة' }] },
+          { t: 'grid', items: [{ k: 'refDate', label: 'تاريخ الإحالة' }, { k: 'days', label: 'عدد أيام الغياب' }, { k: 'dates', label: 'تواريخ الغياب' }] },
+          { t: 'checks', k: 'src', label: 'مصدر الإحالة', opts: ['وكيل شؤون الطلاب'], other: 'أخرى' },
+          { t: 'heading', text: 'أولًا: أسباب الغياب (وفق مقابلة الطالب)' },
+          { t: 'checks', k: 'reasons', label: 'الأسباب', opts: ['ظروف أسرية', 'ظروف صحية أو نفسية', 'صعوبات دراسية', 'ضعف الدافعية', 'صعوبة الاستيقاظ وتنظيم النوم', 'مشكلة مواصلات', 'عدم إدراك آثار الغياب'] },
+          { t: 'checks', k: 'statement', label: 'إفادة الطالب', opts: ['أقر بالغياب دون عذر', 'أفاد بظروف مؤثرة', 'لم يوضح السبب'] },
+          { t: 'checks', k: 'assess', label: 'التقدير الأولي', opts: ['قابل للمعالجة داخل المدرسة', 'يحتاج تواصلًا أسريًا', 'يحتاج دراسة أعمق'] },
+          { t: 'heading', text: 'ثانيًا: الإجراءات الإرشادية المنفذة' },
+          { t: 'checks', k: 'actions', label: 'الإجراءات', opts: ['مقابلة فردية', 'مناقشة أسباب الغياب', 'توضيح أثر الغياب على التحصيل', 'التواصل مع ولي الأمر', 'التنسيق مع المعلمين', 'إحالة لخدمة إرشادية أخرى'] },
+          { t: 'checks', k: 'agree', label: 'الاتفاق', opts: ['الانتظام في الحضور', 'الحضور في الوقت المحدد', 'الإبلاغ عن أي عائق'] },
+          { t: 'heading', text: 'ثالثًا: خطة المتابعة المختصرة' },
+          { t: 'para', text: 'هدف الخطة: انتظام الطالب في الحضور والحد من تكرار الغياب دون عذر.', boxed: true },
+          { t: 'checks', k: 'commit', label: 'التزام الطالب', opts: ['الحضور المنتظم', 'تجنب الغياب دون عذر', 'معالجة أسباب الغياب'] },
+          { t: 'checks', k: 'support', label: 'دعم المدرسة', opts: ['متابعة الحضور', 'التواصل مع الأسرة', 'دعم إرشادي'] },
+          { t: 'checks', k: 'duration', label: 'مدة المتابعة', opts: ['أسبوع', 'أسبوعان'], other: 'أخرى', extra: { k: 'review', label: 'موعد المراجعة' } },
+          { t: 'heading', text: 'رابعًا: نتيجة المتابعة والتوصية' },
+          { t: 'checks', k: 'result', label: 'نتيجة المتابعة', opts: ['انتظام الحضور', 'تحسن جزئي', 'استمرار الغياب', 'لم يحن موعد المتابعة'] },
+          { t: 'checks', k: 'rec', label: 'التوصية', opts: ['إنهاء المتابعة عند تحقق الانتظام', 'استمرار الإرشاد والمتابعة', 'عرض الحالة على لجنة التوجيه الطلابي عند الحاجة'] },
+          { t: 'fields', items: [{ k: 'counselor', label: 'الموجه الطلابي', w: 1 }], hidden: true },
+          { t: 'para', text: 'الموجه الطلابي: {counselor}        التوقيع: ....................        التاريخ: ....................', bold: true, bottom: true },
+          { t: 'note', text: 'ملاحظة: يُحدد فقط ما تحقق فعلًا من إجراءات؛ وتوثيق الحالة لا يغيّر إجراءات حسم المواظبة.' }
+        ]
+      }
+    };
+  })();
+
+  // أي النماذج يظهر في كل قسم
+  RULE_SECTIONS = {
+    rules: ['commit', 'reward', 'modplan', 'teacher', 'problems', 'compensate', 'pledge', 'notice', 'invite', 'incident', 'abuse', 'highrisk'],
+    absence: ['absExcused', 'absUnexcused', 'attendPledge', 'absCase'],
+    minutes: ['committee'],
+    referral: ['referral']
+  };
+
+  rulesState() {
+    if (this._rules) return this._rules;
+    let r = null;
+    try { r = JSON.parse(localStorage.getItem(this.RULES_KEY) || 'null'); } catch (e) {}
+    this._rules = Object.assign({ pick: {}, data: {} }, r || {});
+    return this._rules;
+  }
+
+  setRules(next) {
+    this._rules = next;
+    this.setState({ rulesTick: (this.state.rulesTick || 0) + 1 });
+    // نماذج الإبلاغ الحساسة لا تُحفظ لها بيانات أبدًا
+    const data = {};
+    Object.keys(next.data || {}).forEach(id => { if (this.RULE_FORMS[id] && !this.RULE_FORMS[id].blank) data[id] = next.data[id]; });
+    this.safeSave(this.RULES_KEY, { pick: next.pick, data });
+  }
+
+  // «محضر اجتماع اللجنة» و«إحالة طالب»: نموذج معتمد (افتراضي) أو النسخة الموسّعة السابقة
+  rulesExtended(section) {
+    const sec = section || this.state.section;
+    return (sec === 'minutes' || sec === 'referral') && this.rulesState().pick[sec + 'Mode'] === 'extended';
+  }
+
+  rulesFormId() {
+    const list = this.RULE_SECTIONS[this.state.section];
+    if (!list || this.rulesExtended()) return null;
+    const pick = this.rulesState().pick[this.state.section];
+    return list.indexOf(pick) > -1 ? pick : list[0];
+  }
+
+  rulesVals() {
+    const s = this.state;
+    const id = this.rulesFormId();
+    if (!id) return { isRulesView: false };
+    const R = React.createElement;
+    const def = this.RULE_FORMS[id];
+    const st = this.rulesState();
+    const d = (st.data && st.data[id]) || {};
+    const set = patch => {
+      const cur = this.rulesState();
+      const data = Object.assign({}, cur.data, { [id]: Object.assign({}, cur.data[id] || {}, patch) });
+      this.setRules(Object.assign({}, cur, { data }));
+    };
+    const v = k => (d[k] == null ? '' : String(d[k]));
+    const ink = '#15445a';
+    const inputStyle = { background: '#fff', border: '1px solid #d5d5d5', borderRadius: 12, padding: '10px 12px', fontSize: 13.5, fontFamily: 'inherit', color: '#22333a', width: '100%', boxSizing: 'border-box' };
+    const lab = t => R('span', { style: { fontSize: 12, fontWeight: 700, color: '#5c686d' } }, t);
+    const sec = t => R('label', { style: { fontSize: 13, fontWeight: 700, color: ink } }, t);
+    const chip = on => ({
+      background: on ? ink : '#fff', color: on ? '#fff' : ink, border: '1px solid ' + (on ? ink : '#d5d5d5'),
+      borderRadius: 99, minHeight: 38, padding: '0 14px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer'
+    });
+    const field = (f, key) => R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 6, gridColumn: f.w ? '1 / -1' : 'auto' } },
+      lab(f.label), R('input', { value: v(f.k), onChange: e => set({ [f.k]: e.target.value }), style: inputStyle }));
+    const tableRows = b => {
+      const rows = Array.isArray(d[b.k]) ? d[b.k] : [];
+      return Array.from({ length: b.rows }, (_, i) => b.cols.map((c, j) => {
+        if (b.num && j === 0) return String(i + 1);
+        if (c.fixed) return c.fixed[i] || '';
+        return (rows[i] && rows[i][j]) || '';
+      }));
+    };
+    const setCell = (b, i, j, val) => {
+      const rows = (Array.isArray(d[b.k]) ? d[b.k] : []).map(r => (r || []).slice());
+      while (rows.length <= i) rows.push([]);
+      rows[i][j] = val;
+      set({ [b.k]: rows });
+    };
+    const hintFor = (b, i) => {
+      if (!b.hint) return '';
+      const t = ((this.ABSENCE[b.hint.excuse] || {})[b.hint.tiers[i]] || {}).steps || [];
+      return t.length ? 'مثال: ' + t.join('، ') : '';
+    };
+    const toggle = (k, opt) => {
+      const cur = Array.isArray(d[k]) ? d[k] : [];
+      set({ [k]: cur.indexOf(opt) > -1 ? cur.filter(x => x !== opt) : cur.concat([opt]) });
+    };
+    const on = (k, opt) => Array.isArray(d[k]) && d[k].indexOf(opt) > -1;
+
+    // ---------- نموذج التعبئة ----------
+    const formParts = [];
+    if (def.blank) {
+      formParts.push(R('div', { key: 'blank', style: { background: '#fbeaea', border: '1px solid #e8c4c4', borderRadius: 14, padding: '12px 14px', fontSize: 12.5, lineHeight: 1.9, color: '#8a2e30', fontWeight: 700 } },
+        'نموذج سري للغاية: يُطبع فارغًا ويُعبّأ باليد، ولا تُحفظ له أي بيانات في المنصة. يُتّبع فيه المسار النظامي للبلاغات.'));
+    } else {
+      if (def.sensitive) formParts.push(R('div', { key: 'sens', style: { background: '#fdf3e8', border: '1px solid #d9a24f', borderRadius: 14, padding: '10px 14px', fontSize: 12.5, lineHeight: 1.9, color: '#7a4e14' } },
+        'نموذج سري: اكتب ما يلزم فقط، ولا تتداوله إلا مع المختصين.'));
+      def.blocks.forEach((b, bi) => {
+        const key = 'b' + bi;
+        if (b.t === 'fields' || b.t === 'grid') {
+          formParts.push(R('div', { key, style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10 } }, b.items.map((f, i) => field(f, i))));
+        } else if (b.t === 'heading') {
+          formParts.push(R('div', { key, style: { borderTop: '1px solid #e8eaeb', paddingTop: 12 } }, sec(b.text)));
+        } else if (b.t === 'area') {
+          formParts.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 6 } }, lab(b.label),
+            R('textarea', { value: v(b.k), rows: b.lines || 2, onChange: e => set({ [b.k]: e.target.value }), style: Object.assign({}, inputStyle, { resize: 'vertical', lineHeight: 1.8 }) })));
+        } else if (b.t === 'qa' || b.t === 'lines') {
+          formParts.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+            b.label ? lab(b.label) : null,
+            b.items.map((f, i) => R('div', { key: i, style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+              R('span', { style: { fontSize: 12, color: '#5c686d' } }, (b.t === 'qa' ? (i + 1) + '. ' : '') + f.label),
+              R('input', { value: v(f.k), onChange: e => set({ [f.k]: e.target.value }), style: inputStyle })))));
+        } else if (b.t === 'checks') {
+          formParts.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 8 } }, lab(b.label),
+            R('div', { style: { display: 'flex', gap: 7, flexWrap: 'wrap' } },
+              b.opts.map(o => R('button', { key: o, type: 'button', onClick: () => toggle(b.k, o), style: chip(on(b.k, o)), 'aria-pressed': on(b.k, o) ? 'true' : 'false' }, o))),
+            b.other ? R('input', { value: v(b.k + 'Other'), placeholder: b.other + ' (اختياري)', onChange: e => set({ [b.k + 'Other']: e.target.value }), style: inputStyle }) : null,
+            b.extra ? R('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } }, lab(b.extra.label),
+              R('input', { value: v(b.extra.k), onChange: e => set({ [b.extra.k]: e.target.value }), style: inputStyle })) : null));
+        } else if (b.t === 'table') {
+          const rows = tableRows(b);
+          formParts.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+            lab('الجدول'),
+            R('div', { style: { overflowX: 'auto', border: '1px solid #e0e6e9', borderRadius: 12 } },
+              R('table', { style: { borderCollapse: 'collapse', width: '100%', minWidth: Math.max(320, b.cols.length * 96), fontSize: 12 } },
+                R('thead', null, R('tr', null, b.cols.map((c, j) => R('th', { key: j, style: { background: '#eef3f5', color: ink, padding: '6px 4px', fontWeight: 700, borderBottom: '1px solid #e0e6e9', textAlign: 'center' } }, c.h)))),
+                R('tbody', null, rows.map((r, i) => R('tr', { key: i }, r.map((cell, j) => {
+                  const c = b.cols[j];
+                  const ro = (b.num && j === 0) || c.fixed || c.sign;
+                  return R('td', { key: j, style: { padding: 3, borderTop: '1px solid #eef1f2', textAlign: 'center', color: '#5c686d', minWidth: c.wide ? 180 : 70 } },
+                    ro ? (c.sign ? '' : cell) : R('input', { value: cell, placeholder: j === (b.hint && b.hint.col) ? hintFor(b, i) : '',
+                      onChange: e => setCell(b, i, j, e.target.value), style: Object.assign({}, inputStyle, { padding: '6px 8px', fontSize: 12, borderRadius: 8 }) }));
+                }))))))));
+        }
+      });
+    }
+
+    // ---------- ورقة A4 ----------
+    const dots = n => '.'.repeat(n || 40);
+    const fill = (text, keys) => text.split(/(\{\w+\})/).map((part, i) => {
+      const m = part.match(/^\{(\w+)\}$/);
+      if (!m) return part;
+      const val = v(m[1]).trim();
+      return val ? R('b', { key: i, style: { fontWeight: 700, color: '#15445a' } }, val) : R('span', { key: i, style: { color: '#7a8a90', letterSpacing: 1 } }, dots(30));
+    });
+    const sheet = [];
+    const contactLook = def.design === 'contact';
+    // النماذج الطويلة (dense) تُرسم بخط ومسافات أصغر لتبقى في صفحة واحدة مقروءة
+    const dense = !!def.dense;
+    const fsz = dense ? 13.5 : 15;
+    const gridCols = n => 'repeat(' + n + ',minmax(0,1fr))';
+    const box = onn => R('span', { style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 13, height: 13, flex: '0 0 auto', border: '1.5px solid ' + ink, borderRadius: 2, fontSize: 10, fontWeight: 700, color: ink } }, onn ? '✓' : '');
+    def.blocks.forEach((b, bi) => {
+      const key = 's' + bi;
+      if (b.hidden) return;
+      if (b.t === 'fields') {
+        sheet.push(R('div', { key, style: b.cols
+            ? { display: 'grid', gridTemplateColumns: gridCols(b.cols), gap: dense ? '3px 16px' : '6px 18px', fontSize: fsz }
+            : { display: 'flex', flexWrap: 'wrap', gap: dense ? '3px 16px' : '6px 18px', fontSize: fsz } },
+          b.items.map((f, i) => R('div', { key: i, style: { flex: b.cols ? 'none' : (f.w ? '1 1 100%' : '1 1 200px'), gridColumn: b.cols && f.w ? '1 / -1' : 'auto', display: 'flex', gap: 6, alignItems: 'baseline', minWidth: 0 } },
+            R('span', { style: { whiteSpace: 'nowrap' } }, f.label + ':'),
+            def.blank || !v(f.k).trim() ? R('span', { style: { flex: 1, borderBottom: '1px dotted #7a8a90', minHeight: 18 } }) : R('b', { style: { color: ink, flex: 1 } }, v(f.k))))));
+      } else if (b.t === 'grid') {
+        sheet.push(R('div', { key, style: { display: 'grid', gridTemplateColumns: 'repeat(' + b.items.length + ',minmax(0,1fr))', border: '1px solid ' + ink } },
+          b.items.map((f, i) => R('div', { key: i, style: { borderInlineStart: i ? '1px solid ' + ink : 'none', display: 'flex', flexDirection: 'column' } },
+            R('div', { style: { background: ink, color: '#fff', fontWeight: 700, fontSize: 13, padding: '3px 8px', textAlign: 'center' } }, f.label),
+            R('div', { style: { padding: '3px 8px', minHeight: 26, fontSize: 14, textAlign: 'center' } }, v(f.k))))));
+      } else if (b.t === 'heading') {
+        sheet.push(R('div', { key, style: { fontSize: contactLook || dense ? 14.5 : 15.5, fontWeight: 700, color: ink, lineHeight: dense ? 1.45 : 'normal', marginTop: contactLook ? 1 : dense ? 2 : (b.plain ? 2 : 6) } }, b.text));
+      } else if (b.t === 'para') {
+        sheet.push(R('div', { key, style: { fontSize: contactLook ? 13.5 : 15, lineHeight: contactLook ? 1.6 : 1.9, textAlign: b.align || 'start', fontWeight: b.bold ? 700 : 400, color: b.bold ? ink : '#22333a',
+          marginTop: b.bottom ? 'auto' : 0, border: b.boxed ? '1px solid ' + ink : 'none', padding: b.boxed ? '4px 10px' : 0 } }, fill(b.text)));
+      } else if (b.t === 'area') {
+        const val = def.blank ? '' : v(b.k).trim();
+        if (dense && !val && (b.lines || 1) === 1) {
+          sheet.push(R('div', { key, style: { display: 'flex', gap: 6, alignItems: 'baseline', fontSize: fsz } },
+            R('span', { style: { whiteSpace: 'nowrap' } }, b.label), R('span', { style: { flex: 1, borderBottom: '1px dotted #7a8a90', minHeight: 18 } })));
+          return;
+        }
+        sheet.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: dense ? 0 : 2, fontSize: fsz } },
+          R('span', null, b.label),
+          val ? R('div', { style: { whiteSpace: 'pre-wrap', color: ink, fontWeight: 700, lineHeight: 1.8, borderBottom: '1px dotted #7a8a90', paddingBottom: 2 } }, val)
+            : Array.from({ length: b.lines || 1 }, (_, i) => R('div', { key: i, style: { borderBottom: '1px dotted #7a8a90', height: dense ? 20 : 26 } }))));
+      } else if (b.t === 'qa' || b.t === 'lines') {
+        sheet.push(R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: dense ? 2 : 4, fontSize: fsz } },
+          b.label ? R('span', null, b.label) : null,
+          R('div', { style: b.cols ? { display: 'grid', gridTemplateColumns: gridCols(b.cols), gap: dense ? '2px 18px' : '4px 18px' } : { display: 'flex', flexDirection: 'column', gap: dense ? 2 : 4 } },
+          b.items.map((f, i) => R('div', { key: i, style: { display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: b.t === 'qa' ? 'wrap' : 'nowrap' } },
+            R('span', { style: { flex: b.t === 'qa' ? '1 1 100%' : '0 0 auto' } }, (b.t === 'qa' ? (i + 1) + '.  ' : '') + f.label),
+            v(f.k).trim() ? R('b', { style: { color: ink, flex: 1 } }, v(f.k)) : R('span', { style: { flex: 1, borderBottom: '1px dotted #7a8a90', minHeight: b.t === 'qa' ? (dense ? 14 : 22) : 18 } }))))));
+      } else if (b.t === 'checks') {
+        const opts = b.opts.map(o => R('span', { key: o, style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, box(on(b.k, o)), o));
+        if (b.other) opts.push(R('span', { key: 'o', style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, box(!!v(b.k + 'Other').trim()), b.other + ': ',
+          v(b.k + 'Other').trim() ? R('b', { style: { color: ink } }, v(b.k + 'Other')) : dots(18)));
+        if (b.extra) opts.push(R('span', { key: 'x', style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, b.extra.label + ': ',
+          v(b.extra.k).trim() ? R('b', { style: { color: ink } }, v(b.extra.k)) : dots(16)));
+        sheet.push(contactLook
+          ? R('div', { key, style: { display: 'grid', gridTemplateColumns: '118px minmax(0,1fr)', border: '1px solid ' + ink } },
+              R('div', { style: { background: ink, color: '#fff', fontWeight: 700, fontSize: 12.5, padding: '3px 8px', display: 'flex', alignItems: 'center' } }, b.label),
+              R('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '3px 14px', padding: '4px 10px', fontSize: 13, alignItems: 'center', lineHeight: 1.45 } }, opts))
+          : R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 6, fontSize: 15 } }, R('span', null, b.label + ' :'),
+              R('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '6px 18px' } }, opts)));
+      } else if (b.t === 'table') {
+        const rows = def.blank ? Array.from({ length: b.rows }, () => b.cols.map(() => '')) : tableRows(b);
+        const th = { background: ink, color: '#fff', fontWeight: 700, fontSize: 12.5, padding: '5px 4px', border: '1px solid ' + ink, textAlign: 'center', lineHeight: 1.4 };
+        const head = [];
+        if (b.group) {
+          head.push(R('tr', { key: 'g' }, b.cols.map((c, j) => {
+            if (j === b.group.from) return R('th', { key: j, colSpan: b.group.span, style: th }, b.group.label);
+            if (j > b.group.from && j < b.group.from + b.group.span) return null;
+            return R('th', { key: j, rowSpan: 2, style: th }, c.h);
+          })));
+          head.push(R('tr', { key: 'h' }, b.cols.slice(b.group.from, b.group.from + b.group.span).map((c, j) => R('th', { key: j, style: th }, c.h))));
+        } else {
+          head.push(R('tr', { key: 'h' }, b.cols.map((c, j) => R('th', { key: j, style: Object.assign({}, th, { width: c.wide ? '34%' : (b.num && j === 0 ? 28 : 'auto') }) }, c.h))));
+        }
+        sheet.push(R('table', { key, style: { borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' } },
+          R('thead', null, head),
+          R('tbody', null, rows.map((r, i) => R('tr', { key: i }, r.map((cell, j) => R('td', { key: j, style: {
+            border: '1px solid ' + ink, padding: dense ? '2px 6px' : '4px 6px', fontSize: 13, height: b.tall ? 62 : (dense ? 26 : 30), verticalAlign: 'middle', textAlign: b.cols[j].wide ? 'start' : 'center',
+            fontWeight: b.cols[j].fixed || (b.num && j === 0) ? 700 : 400, color: b.cols[j].fixed || (b.num && j === 0) ? ink : '#22333a', wordBreak: 'break-word' } }, cell)))))));
+      } else if (b.t === 'panel') {
+        sheet.push(R('div', { key, style: { border: '1px solid ' + ink, display: 'flex', flexDirection: 'column' } },
+          b.rows.map((row, i) => R('div', { key: i, style: { display: 'grid', gridTemplateColumns: '130px minmax(0,1fr)', borderTop: i ? '1px solid ' + ink : 'none' } },
+            R('div', { style: { background: ink, color: '#fff', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, textAlign: 'center' } }, row.side),
+            R('div', { style: { padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14.5, lineHeight: 1.85 } },
+              row.lines.map((ln, j) => R('div', { key: j }, fill(ln))))))));
+      } else if (b.t === 'kv') {
+        sheet.push(R('div', { key, style: { border: '1.5px solid #22333a', display: 'flex', flexDirection: 'column', fontSize: 13.5 } },
+          R('div', { style: { fontWeight: 700, padding: '4px 8px', borderBottom: '1px solid #22333a' } }, b.head),
+          b.rows.map((r, i) => R('div', { key: i, style: { display: 'grid', gridTemplateColumns: 'repeat(' + r.length + ',minmax(0,1fr))', borderBottom: i < b.rows.length - 1 ? '1px solid #22333a' : 'none' } },
+            r.map((c, j) => R('div', { key: j, style: { padding: '6px 8px', minHeight: 30, fontWeight: j === 0 ? 700 : 400, borderInlineStart: j ? '1px solid #22333a' : 'none' } }, c))))));
+      } else if (b.t === 'sign') {
+        if (dense) {
+          sheet.push(R('div', { key, style: { marginTop: 'auto', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6, fontSize: fsz } },
+            b.roles.map((r, i) => R('div', { key: i, style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+              r.role ? R('div', { style: { fontWeight: 700, color: ink } }, r.role) : null,
+              R('div', { style: { display: 'flex', gap: 24, flexWrap: 'wrap' } },
+                R('span', null, 'الاسم: ', r.k && v(r.k).trim() ? R('b', { style: { color: ink } }, v(r.k)) : dots(30)),
+                R('span', null, 'التوقيع: ' + dots(22)),
+                b.noDate ? null : R('span', null, 'التاريخ: ' + dots(22)))))));
+          return;
+        }
+        const roleCol = (r, i) => R('div', { key: i, style: { display: 'flex', flexDirection: 'column', gap: b.compact ? 8 : 12, alignItems: 'stretch', minWidth: 0 } },
+          r.role ? R('div', { style: { fontWeight: 700, color: ink, textAlign: 'center' } }, r.role) : null,
+          R('div', null, 'الاسم: ', r.k && v(r.k).trim() ? R('b', { style: { color: ink } }, v(r.k)) : dots(26)),
+          R('div', null, 'التوقيع: ' + dots(24)),
+          b.noDate ? null : R('div', null, 'التاريخ: ' + dots(24)));
+        const cols = b.roles.map(roleCol);
+        if (b.stamp) cols.unshift(R('div', { key: 'stamp', style: { fontWeight: 700, color: ink, alignSelf: 'center', textAlign: 'center' } }, typeof b.stamp === 'string' ? b.stamp : 'الختم'));
+        // في الاتجاه من اليمين لليسار: العمود الأول يمين الصفحة
+        let tracks, kids;
+        if (b.align === 'center') { tracks = 'minmax(0,320px)'; kids = cols; }
+        else if (b.align === 'start') { tracks = 'minmax(0,1fr) minmax(0,1fr)'; kids = cols.concat([R('div', { key: 'sp' })]); }
+        else if (cols.length === 1) { tracks = 'minmax(0,1fr) minmax(0,1fr)'; kids = [R('div', { key: 'sp' })].concat(cols); }
+        else { tracks = 'repeat(' + cols.length + ',minmax(0,1fr))'; kids = cols; }
+        sheet.push(R('div', { key, style: { marginTop: b.stamp || bi === def.blocks.length - 1 ? 'auto' : 14, paddingTop: 14, display: 'grid', fontSize: 14.5,
+          gridTemplateColumns: tracks, justifyContent: b.align === 'center' ? 'center' : 'stretch', gap: 24 } }, kids));
+      } else if (b.t === 'note') {
+        sheet.push(R('div', { key, style: { fontSize: 13, lineHeight: 1.9, color: '#3d4a50', whiteSpace: 'pre-line', marginTop: 'auto' } }, b.text));
+      }
+    });
+
+    const list = this.RULE_SECTIONS[s.section];
+    return {
+      isRulesView: true,
+      rulesHasChooser: list.length > 1,
+      rulesChooser: R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, list.map(fid => R('button', {
+        key: fid, type: 'button', style: chip(fid === id),
+        onClick: () => { const cur = this.rulesState(); this.setRules(Object.assign({}, cur, { pick: Object.assign({}, cur.pick, { [s.section]: fid }) })); }
+      }, this.RULE_FORMS[fid].short))),
+      rulesForm: R('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } }, formParts),
+      rulesSecret: def.secret || '',
+      rulesHasSecret: !!def.secret,
+      rulesTitle: def.title,
+      rulesSheet: R('div', { style: { display: 'flex', flexDirection: 'column', gap: contactLook ? 5 : dense ? 6 : 12, flex: 1 } }, sheet),
+      rulesCanClear: !def.blank,
+      onRulesClear: () => { const cur = this.rulesState(); const data = Object.assign({}, cur.data); delete data[id]; this.setRules(Object.assign({}, cur, { data })); }
+    };
   }
 
   asset(p) {
@@ -4279,7 +4907,7 @@ class Component extends DCLogic {
     const next = Object.assign({}, this.weeklyState(), patch);
     this._weekly = next;
     this.setState({ weekly: next });
-    try { localStorage.setItem(this.WEEKLY_KEY, JSON.stringify(next)); } catch (e) {}
+    this.safeSave(this.WEEKLY_KEY, next);
   }
   wkNotice(t) { this.setWeekly({ notice: t }); setTimeout(() => this.setWeekly({ notice: '' }), 3200); }
 
@@ -4476,7 +5104,7 @@ class Component extends DCLogic {
       refNum: r.num, onRefNum: e => this.setRef({ num: e.target.value }),
       refAttach: r.attach, onRefAttach: e => this.setRef({ attach: e.target.value }),
       refFirstDegree: firstTime,
-      refLogoLabel: this.state.exam.logo ? 'تغيير شعار المدرسة' : 'شعار ثانوية الإمام — رفع شعار آخر',
+      refLogoLabel: this.state.exam.logo ? 'تغيير شعار المدرسة' : 'رفع شعار المدرسة',
 
       rDate: this.hijri(new Date()),
       rNum: r.num, rAttach: r.attach,
@@ -4635,6 +5263,16 @@ class Component extends DCLogic {
       },
       cNotes: c.notes,
       cItems: sheetItems,
+      // النماذج الطويلة (أكثر من 15 سطرًا مع الخيارات الفرعية) تُضغط قليلًا لتبقى في صفحة واحدة
+      ...(() => { const dense = sheetItems.length + sheetItems.filter(x => x.hasValues).length > 15; return {
+      cItemRowStyle: {
+        display: 'grid', gridTemplateColumns: '12px minmax(0,1fr)', alignItems: 'start', gap: 8,
+        fontSize: dense ? 13 : 14, lineHeight: dense ? 1.35 : 1.5
+      },
+      cSignStyle: {
+        marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4,
+        paddingBottom: dense ? 14 : 60, fontSize: 15, fontWeight: 700, color: '#15445a'
+      } }; })(),
       cOther: c.other,
       cAckRing: ring(false)
     };
@@ -4654,10 +5292,22 @@ class Component extends DCLogic {
     const head = this.HASR_COLS.map(c => c[1]).join(',');
     const hint = ['1', '', '1', 'مستقران / منفصلان', 'نعم / لا', 'الأم / الأب / غيرهما', '', 'نعم / لا',
       'أقل من 3000 / 3000-5000 / 5000 فأكثر', '', 'شقة / فيلا / غير ذلك', 'ملك / إيجار', '', '', '', ''].join(',');
-    const blob = new Blob(['\ufeff' + head + '\n' + hint + '\n'], { type: 'text/csv;charset=utf-8' });
+    let blob, name;
+    if (window.XLSX) {
+      const ws = window.XLSX.utils.aoa_to_sheet([head.split(','), hint.split(',')]);
+      ws['!cols'] = this.HASR_COLS.map(() => ({ wch: 18 }));
+      const wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+      const out = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      name = 'نموذج حصر معلومات الطلاب.xlsx';
+    } else {
+      blob = new Blob(['\ufeff' + head + '\n' + hint + '\n'], { type: 'text/csv;charset=utf-8' });
+      name = 'نموذج حصر معلومات الطلاب.csv';
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'نموذج حصر معلومات الطلاب.csv';
+    a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   }
@@ -4707,13 +5357,32 @@ class Component extends DCLogic {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    if (!/\.(csv|txt)$/i.test(file.name)) {
-      this.setHasr({ error: 'الملف يجب أن يكون بصيغة CSV. من Excel اختر: حفظ باسم ← CSV UTF-8.' });
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+    if (!isExcel && !/\.(csv|txt)$/i.test(file.name)) {
+      this.setHasr({ error: 'الملف يجب أن يكون بصيغة Excel (xlsx) أو CSV.' });
+      return;
+    }
+    if (isExcel && !window.XLSX) {
+      this.setHasr({ error: 'تعذّر فتح ملف Excel في هذا المتصفح. احفظه من Excel بصيغة CSV UTF-8 ثم ارفعه.' });
       return;
     }
     const r = new FileReader();
     r.onload = () => {
-      const grid = this.parseCsv(String(r.result || ''));
+      let grid;
+      if (isExcel) {
+        try {
+          const wb = window.XLSX.read(new Uint8Array(r.result), { type: 'array' });
+          const sh = wb.Sheets[wb.SheetNames[0]];
+          grid = window.XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false })
+            .map(row => row.map(c => String(c == null ? '' : c)))
+            .filter(row => row.some(c => c.trim()));
+        } catch (err) {
+          this.setHasr({ error: 'تعذّرت قراءة ملف Excel. تأكد أنه غير محمي بكلمة مرور.' });
+          return;
+        }
+      } else {
+        grid = this.parseCsv(String(r.result || ''));
+      }
       if (grid.length < 2) { this.setHasr({ error: 'لم يُعثر على بيانات طلاب في الملف.' }); return; }
       const head = grid[0].map(h => h.trim());
       const idx = {};
@@ -4734,7 +5403,7 @@ class Component extends DCLogic {
       this.setHasr({ rows: rows, fileName: file.name, error: '', tab: 'overview', query: '' });
     };
     r.onerror = () => this.setHasr({ error: 'تعذّرت قراءة الملف.' });
-    r.readAsText(file, 'utf-8');
+    if (isExcel) r.readAsArrayBuffer(file); else r.readAsText(file, 'utf-8');
   }
 
   hasrFlags(s) {
@@ -5572,6 +6241,12 @@ class Component extends DCLogic {
   }
 
   fileName() {
+    const rid = this.rulesFormId();
+    if (rid) {
+      const d = this.rulesState().data[rid] || {};
+      const nm = String(d.name || d.guardian || '').trim();
+      return this.RULE_FORMS[rid].title.replace(/[\/]/g, '-') + (nm ? ' — ' + nm : '') + '.pdf';
+    }
     if (this.state.section === 'followup') return 'استمارة متابعة خطة الموجه الطلابي.pdf';
     if (this.state.section === 'casestudy') return 'دراسة حالة' + (this.caseState().name ? ' — ' + this.caseState().name : '') + '.pdf';
     if (this.state.section === 'referral') {
@@ -5620,6 +6295,14 @@ class Component extends DCLogic {
       this.setState({ pdfBusy: false, pdfError: 'تعذّر إنشاء ملف PDF. تأكد من اتصال الإنترنت ثم أعد المحاولة.' });
       setTimeout(() => this.setState({ pdfError: '' }), 6000);
     });
+  }
+
+  // الطباعة المباشرة: تصغير الورقة بقدر ما يلزم لتبقى صفحة A4 واحدة
+  setPrintZoom(node) {
+    if (!node) return;
+    node.style.removeProperty('--tm-print-zoom');
+    const h = node.scrollHeight || 1123;
+    if (h > 1123) node.style.setProperty('--tm-print-zoom', ((1123 / h) * 0.99).toFixed(4));
   }
 
   // shrink a one-page sheet just enough that nothing is cut off at the A4 edge
@@ -5941,6 +6624,7 @@ class Component extends DCLogic {
     });
     holder.appendChild(clone);
     document.body.appendChild(holder);
+    this.setPrintZoom(clone);
     document.body.setAttribute('data-printing', '1');
     const prevTitle = document.title;
     document.title = this.state.section === 'exam' ? 'جدول الاختبارات'
@@ -6008,11 +6692,11 @@ class Component extends DCLogic {
     const xt = this.examTokens();
     const o = this.output();
 
-    const navDefs = [['home', 'الرئيسية'], ['session', 'تحضير جلسة'], ['minutes', 'محضر اجتماع اللجنة'], ['letter', 'رسالة لولي أمر'], ['program', 'برنامج توعوي'], ['exam', 'جداول الاختبارات'], ['plan', 'الخطة الفصلية'], ['followup', 'متابعة الخطة'], ['survey', 'بوصلة التخصص'], ['absence', 'إجراءات الغياب'], ['hasr', 'حصر معلومات الطلاب'], ['contact', 'التواصل مع ولي الأمر'], ['weekly', 'المتابعة الأسبوعية'], ['referral', 'إحالة طالب'], ['casestudy', 'دراسة حالة'], ['bank', 'بنك الأفكار']];
+    const navDefs = [['home', 'الرئيسية'], ['session', 'تحضير جلسة'], ['minutes', 'محضر اجتماع اللجنة'], ['letter', 'رسالة لولي أمر'], ['program', 'برنامج توعوي'], ['exam', 'جداول الاختبارات'], ['plan', 'الخطة الفصلية'], ['followup', 'متابعة الخطة'], ['survey', 'بوصلة التخصص'], ['absence', 'إجراءات الغياب'], ['hasr', 'حصر معلومات الطلاب'], ['contact', 'التواصل مع ولي الأمر'], ['rules', 'نماذج قواعد السلوك'], ['weekly', 'المتابعة الأسبوعية'], ['referral', 'إحالة طالب'], ['casestudy', 'دراسة حالة'], ['bank', 'بنك الأفكار']];
     const titles = {
       home: ['مساعد الموجّه الطلابي', 'منصة تمهيد'],
       session: ['قبل الدخول للجلسة', 'تحضير جلسة إرشادية'],
-      minutes: ['اجتماعات لجنة التوجيه الطلابي في المدرسة', 'محضر اجتماع لجنة التوجيه الطلابي'],
+      minutes: ['النموذج المعتمد أو النسخة الموسّعة', 'محضر اجتماع لجنة التوجيه الطلابي'],
       letter: ['مراسلات الأسرة', 'رسالة لولي أمر'],
       program: ['نشرة أو نقاط لقاء', 'محتوى برنامج توعوي'],
       exam: ['أسبوعان بتواريخ تُولَّد آلياً', 'جدول الاختبارات'],
@@ -6020,11 +6704,12 @@ class Component extends DCLogic {
       followup: ['نُفّذ، جارٍ، لم يُنفّذ — لكل إجراء', 'متابعة خطة الموجّه الطلابي'],
       bank: ['نقاط انطلاق جاهزة للتخصيص', 'بنك الأفكار المرجعي'],
       survey: ['تصحيح وتفسير فوري بقواعد ثابتة', 'بوصلة التخصص'],
-      absence: ['الإجراء النظامي وخطاب ولي الأمر', 'إجراءات الغياب'],
+      absence: ['النماذج المعتمدة للغياب، ودراسة حالة الغياب', 'إجراءات الغياب'],
+      rules: ['النماذج المعتمدة في دليل قواعد السلوك والمواظبة 1448', 'نماذج قواعد السلوك'],
       hasr: ['تقرير فوري من نماذج الحصر — يبقى على جهازك', 'حصر معلومات الطلاب'],
       contact: ['نماذج السلوك والمستوى الدراسي والانضباط والنفسي والاجتماعي', 'نماذج التواصل مع ولي الأمر'],
       weekly: ['بين الأسرة والمدرسة — أسبوعًا بأسبوع', 'استمارة المتابعة الأسبوعية'],
-      referral: ['من المعلم إلى الموجّه الطلابي أو وكيل شؤون الطلاب', 'استمارة إحالة طالب'],
+      referral: ['النموذج المعتمد أو استمارة المعلم الموسّعة', 'إحالة طالب'],
       casestudy: ['مسوّدة سرية على جهازك — التوثيق الرسمي في نظام نور', 'استمارة دراسة حالة'],
       about: ['وثيقة تعريفية', 'عن منصة تمهيد']
     };
@@ -6089,16 +6774,17 @@ class Component extends DCLogic {
     const cats = ['الكل', 'جلسة فردية', 'جلسة جماعية', 'محضر', 'مراسلات', 'برامج'];
     const toolDefs = [
       { title: 'تحضير جلسة فردية أو جماعية', desc: 'نقاط حديث وأسئلة مقترحة حسب نوع الحالة، قبل الدخول للجلسة.', key: 'session' },
-      { title: 'محضر اجتماع لجنة التوجيه الطلابي', desc: 'جدول أعمال مقترح حسب رقم الاجتماع، والحاضرون وأدوارهم، والمناقشات، والتوصيات والمسؤول عنها، مع خانات التوقيع.', key: 'minutes' },
+      { title: 'محضر اجتماع لجنة التوجيه الطلابي', desc: 'النموذج المعتمد لدراسة مشكلة سلوكية، أو محضر موسّع لأي اجتماع بجدول أعمال وتوصيات.', key: 'minutes' },
       { title: 'رسالة لولي أمر', desc: 'صياغة رسالة بلهجة مناسبة لطبيعة الحالة.', key: 'letter' },
       { title: 'محتوى برنامج توعوي', desc: 'نشرة أو نقاط لقاء جاهزة بناءً على هدف البرنامج.', key: 'program' },
       { title: 'متابعة خطة الموجّه الطلابي', desc: 'متابعة إجراءات كل برنامج: نُفّذ أو جارٍ أو لم يُنفّذ، مع التاريخ ومؤشرات الإنجاز، وطباعة الاستمارة.', key: 'followup' },
       { title: 'استمارة دراسة حالة', desc: 'البيانات الأولية والجوانب الأربعة والتشخيص والخطة العلاجية وجلسات المتابعة، في ورقة تُطبع بديباجة المدرسة.', key: 'casestudy' },
-      { title: 'استمارة إحالة طالب', desc: 'يختار المعلم الحالة فتُوجَّه الإحالة تلقائياً إلى الموجّه الطلابي أو وكيل شؤون الطلاب.', key: 'referral' },
+      { title: 'إحالة طالب', desc: 'النموذج السري المعتمد من وكيل شؤون الطلبة، أو استمارة المعلم الموسّعة.', key: 'referral' },
       { title: 'نماذج التواصل مع ولي الأمر', desc: 'تعبئة نموذج السلوك أو انخفاض المستوى الدراسي أو الانضباط المدرسي أو النفسي والاجتماعي، وتنزيله جاهزاً للتوقيع.', key: 'contact' },
       { title: 'استمارة المتابعة الأسبوعية', desc: 'نسخة للأسرة وجزء للمدرسة وتقييم مشترك كل أسبوع، مع سجل يبيّن اتجاه الحالة وتنبيه عند التراجع.', key: 'weekly' },
       { title: 'حصر معلومات الطلاب', desc: 'ارفع ملف نماذج الحصر ليُبنى تقرير بالحالات والتوزيعات وخطة المتابعة، دون حفظ البيانات.', key: 'hasr' },
-      { title: 'إجراءات الغياب', desc: 'الإجراء النظامي حسب عدد الأيام ونوع العذر، مع خطاب جاهز لولي الأمر.', key: 'absence' },
+      { title: 'إجراءات الغياب', desc: 'نماذج الغياب بعذر وبدون عذر، وتعهد المواظبة، ودراسة حالة مختصرة للغياب.', key: 'absence' },
+      { title: 'نماذج قواعد السلوك', desc: 'النماذج المعتمدة في دليل قواعد السلوك: الالتزام، والرصد، وخطة التعديل، والتعهد، والإشعار، والدعوة، ومحضر الضبط، والإبلاغ.', key: 'rules' },
       { title: 'بوصلة التخصص', desc: 'تعبئة استبانة الميول أو نضج القرار، وتصحيحها وتفسيرها فوراً مع سجل للطلاب.', key: 'survey' },
       { title: 'بنك الأفكار المرجعي', desc: 'نماذج ونقاط انطلاق جاهزة للتخصيص بدل البدء من الصفر.', key: 'bank' }
     ];
@@ -6133,12 +6819,30 @@ class Component extends DCLogic {
       dataNotice: s.dataNotice,
       hasDataNotice: !!s.dataNotice,
       showCaseNotice: ['session', 'survey'].indexOf(s.section) > -1,
+      saveErrorOn: !!s.saveError,
+      schoolSetupShow: s.section === 'home' && (!s.schoolSetupDone || s.schoolSetupOpen),
+      onOpenSchoolSetup: () => { this.setState({ section: 'home', schoolSetupOpen: true, menuOpen: false }); window.scrollTo(0, 0); },
+      onSchoolSetupSave: () => this.setState({ schoolSetupDone: true, schoolSetupOpen: false }),
+      onUseImamLogo: () => {
+        fetch(this.asset('assets/logo/imam-school-print.png')).then(r => r.blob())
+          .then(b => this.shrinkImage(b, 400)).then(url => this.set('exam.logo', url)).catch(() => {});
+      },
+      aboutPersonalLine: 'أداة استخدام شخصي للموجّه الطلابي' + ((s.exam.school || '').trim() ? ' في ' + s.exam.school.trim() : '') + '.',
+      ...(() => {
+        const since = s.lastBackup || s.createdAt;
+        const days = since ? Math.floor((Date.now() - new Date(since).getTime()) / 86400000) : 0;
+        return {
+          backupDue: !s.saveError && !s.backupSnoozed && !!since && days >= 7,
+          backupDueTitle: s.lastBackup ? 'آخر نسخة احتياطية قبل ' + (days === 1 ? 'يوم واحد' : days === 2 ? 'يومين' : days <= 10 ? days + ' أيام' : days + ' يومًا') + '.' : 'لم تصدّر نسخة احتياطية بعد.',
+          onSnoozeBackup: () => this.setState({ backupSnoozed: true })
+        };
+      })(),
       schoolLogoImg: this.logoImg(s.exam.logo, { maxWidth: 70, maxHeight: 70, objectFit: 'contain' }),
       schoolLogoImg56: this.logoImg(s.exam.logo, { height: 56, objectFit: 'contain', alignSelf: 'flex-start' }),
       schoolLogoImg74: this.examTokens().poster
         ? (s.exam.logo
             ? this.logoImg(s.exam.logo, { height: 60, width: 'auto', maxWidth: 146, objectFit: 'contain', display: 'block' })
-            : this.logoImg(this.asset('assets/logo/imam-school-white.png'), { height: 84, width: 'auto', maxWidth: 180, objectFit: 'contain' }))
+            : this.logoImg(null, { height: 84, width: 'auto', maxWidth: 180, objectFit: 'contain' }))
         : this.logoImg(s.exam.logo, { height: 70, width: 'auto', maxWidth: 160, objectFit: 'contain' }),
       schoolLogoImg64: this.logoImg(s.exam.logo, { maxWidth: 64, maxHeight: 64, objectFit: 'contain' }),
       schoolLogoImgTall: this.logoImg(s.exam.logo, { maxHeight: 64, objectFit: 'contain' }),
@@ -6146,7 +6850,7 @@ class Component extends DCLogic {
         src: this.asset('assets/logo/moe-logo-trimmed.png'),
         alt: 'وزارة التعليم', style: { height: 84, width: 'auto', maxWidth: 190, objectFit: 'contain', display: 'block' }
       }),
-      refSchoolLogoImg: this.logoImg(s.exam.logo || this.asset('assets/logo/imam-school-print.png'),
+      refSchoolLogoImg: this.logoImg(s.exam.logo,
         { height: 70, width: 'auto', maxWidth: 190, objectFit: 'contain', display: 'block' }),
       moeLogoImg: React.createElement('img', {
         src: this.asset(this.examTokens().poster ? 'assets/logo/moe-logo-white.png' : 'assets/logo/moe-logo-trimmed.png'),
@@ -6231,7 +6935,7 @@ class Component extends DCLogic {
       ...this.followVals(),
       isCase: s.section === 'casestudy',
       ...this.caseVals(),
-      isAbsence: s.section === 'absence',
+      isAbsence: false, // أُبدل بالنماذج المعتمدة (rulesVals)
       ...this.absenceVals(),
       isHasr: s.section === 'hasr',
       ...this.hasrVals(),
@@ -6239,9 +6943,26 @@ class Component extends DCLogic {
       ...this.weeklyVals(),
       isContact: s.section === 'contact',
       ...this.contactVals(),
-      isReferral: s.section === 'referral',
+      isReferral: s.section === 'referral' && this.rulesExtended('referral'),
       ...this.referralVals(),
-      isTool: ['session', 'minutes', 'letter', 'program'].indexOf(s.section) > -1,
+      isTool: ['session', 'letter', 'program'].indexOf(s.section) > -1 || (s.section === 'minutes' && this.rulesExtended('minutes')),
+      ...this.rulesVals(),
+      ...(() => {
+        if (s.section !== 'minutes' && s.section !== 'referral') return { hasVariantSwitch: false };
+        const ext = this.rulesExtended();
+        const pick = mode => () => { const cur = this.rulesState(); this.setRules(Object.assign({}, cur, { pick: Object.assign({}, cur.pick, { [s.section + 'Mode']: mode }) })); };
+        const chip = on => ({ background: on ? '#15445a' : '#fff', color: on ? '#fff' : '#15445a', border: '1px solid ' + (on ? '#15445a' : '#d5d5d5'),
+          borderRadius: 99, minHeight: 40, padding: '0 16px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' });
+        return {
+          hasVariantSwitch: true,
+          variantSwitch: React.createElement('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+            React.createElement('button', { type: 'button', onClick: pick('official'), style: chip(!ext), 'aria-pressed': !ext ? 'true' : 'false' }, 'النموذج المعتمد'),
+            React.createElement('button', { type: 'button', onClick: pick('extended'), style: chip(ext), 'aria-pressed': ext ? 'true' : 'false' }, 'النسخة الموسّعة')),
+          variantHint: s.section === 'minutes'
+            ? (ext ? 'محضر عام لأي اجتماع للجنة: جدول أعمال مقترح، والحاضرون وأدوارهم، والتوصيات والمسؤول عنها.' : 'النموذج المعتمد في دليل قواعد السلوك، لدراسة مشكلة سلوكية في اجتماع اللجنة.')
+            : (ext ? 'استمارة يعبّئها المعلم: نوع المشكلة وما اتخذه من إجراءات، وتوجَّه إلى الموجّه الطلابي أو وكيل شؤون الطلاب.' : 'النموذج السري المعتمد: إحالة من وكيل شؤون الطلبة إلى الموجّه الطلابي.')
+        };
+      })(),
       isExam: s.section === 'exam',
       isPlan: s.section === 'plan',
       plan: s.plan,
@@ -6368,8 +7089,8 @@ class Component extends DCLogic {
         { label: 'تعزيز السلوك الإيجابي', style: { border: '1px solid #d5d5d5', background: '#15445a', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '8px 6px', width: 82 } }
       ],
       planPageStyle: {
-        width: 794, minHeight: 1123, background: '#fff', padding: '40px 44px',
-        display: 'flex', flexDirection: 'column', gap: 14, boxSizing: 'border-box',
+        width: 794, minHeight: 1123, background: '#fff', padding: '26px 40px',
+        display: 'flex', flexDirection: 'column', gap: 10, boxSizing: 'border-box',
         fontFamily: 'var(--font-core)', direction: 'rtl'
       },
       planPrincipalName: s.plan.principal || '—',
@@ -6698,9 +7419,8 @@ class Component extends DCLogic {
       onSchoolLogo: ev => {
         const file = ev.target.files && ev.target.files[0];
         if (!file) return;
-        const r = new FileReader();
-        r.onload = () => this.set('exam.logo', r.result);
-        r.readAsDataURL(file);
+        ev.target.value = '';
+        this.shrinkImage(file, 400).then(url => this.set('exam.logo', url), () => {});
       },
       clearSchoolLogo: () => this.set('exam.logo', null),
       uploadLabelStyle: {
@@ -6817,7 +7537,6 @@ class Component extends DCLogic {
         fontSize: 12.5, fontWeight: 700
       },
       examLogoSrc: this.asset(xt.poster ? 'assets/logo/moe-logo-white.png' : 'assets/logo/moe-logo-trimmed.png'),
-      tamheedMarkSrc: this.asset('assets/logo/tamheed-mark.png'),
       examMarkSrc: this.asset(xt.poster ? 'assets/logo/tamheed-mark-white.png' : 'assets/logo/tamheed-mark.png'),
       examPosterLine1Style: { display: 'block', height: 5, width: 32, borderRadius: 99, background: 'linear-gradient(90deg,#69cee3,#5fdda9)' },
       examPosterLine2Style: { display: 'block', height: 5, width: 21, borderRadius: 99, background: '#5fdda9' },
@@ -6882,8 +7601,10 @@ class Component extends DCLogic {
       panelBg: '#e8eaeb',
       previewLabel: pageH > 1180 ? 'معاينة A4 — المحتوى يتجاوز صفحة وسيُقسم في ملف PDF' : 'معاينة بمقاس A4',
       pageStyle: {
-        width: 794, minHeight: 1123, background: '#fff', padding: '46px 54px',
-        display: 'flex', flexDirection: 'column', gap: 20, boxShadow: '0 20px 50px rgba(0,56,69,.18)'
+        width: 794, minHeight: 1123, background: '#fff',
+        // تحضير الجلسة والمحضر الموسّع أطول من غيرهما، فتُضيَّق مسافاتهما ليبقيا صفحة واحدة
+        padding: s.section === 'session' ? '34px 50px' : s.section === 'minutes' ? '26px 46px' : '46px 54px',
+        display: 'flex', flexDirection: 'column', gap: s.section === 'session' ? 14 : s.section === 'minutes' ? 10 : 20, boxShadow: '0 20px 50px rgba(0,56,69,.18)'
       },
       boxStyle: { width: 794 * fit + 'px', height: pageH * fit + 'px', flex: '0 0 auto' },
       scaleStyle: { transform: 'scale(' + fit + ')', transformOrigin: 'top right', width: '794px', height: pageH + 'px' },

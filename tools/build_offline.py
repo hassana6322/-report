@@ -1,11 +1,11 @@
 """Build a single self-contained, offline index.html from the Tamheed v3 design component.
 
-usage: build_offline.py <handoff_dir> <html2pdf.bundle.min.js> <react.production.min.js> <react-dom.production.min.js> <out.html>
-(html2pdf.js@0.10.3, react@18.3.1, react-dom@18.3.1 — e.g. from `npm pack`)
+usage: build_offline.py <handoff_dir> <html2pdf.bundle.min.js> <react.production.min.js> <react-dom.production.min.js> <out.html> <xlsx.full.min.js>
+(html2pdf.js@0.10.3, react@18.3.1, react-dom@18.3.1, xlsx@0.18.5 — e.g. from `npm pack`)
 """
 import base64, json, re, sys, pathlib
 
-src_dir, html2pdf, react, react_dom, out = map(pathlib.Path, sys.argv[1:6])
+src_dir, html2pdf, react, react_dom, out, xlsx = map(pathlib.Path, sys.argv[1:7])
 
 DS = src_dir / "_ds/moe-design-system-ddd98866-727b-4854-b938-95c134b2fa59"
 v3 = next(src_dir.glob("*v3.dc.html"))
@@ -18,8 +18,24 @@ def data_uri(p):
     return f"data:{MIME[p.suffix]};base64,{base64.b64encode(p.read_bytes()).decode()}"
 
 
+# Font faces nothing in the app uses: the editorial serif families, and Bahij weights
+# that no style asks for. Dropping them only from the build keeps the source complete.
+def drop_unused_faces(css):
+    kept = []
+    for rule in re.findall(r'@font-face\{[^}]*\}\n?|[^@]+|@', css):
+        if rule.startswith('@font-face') and (
+            'Thmanyah Serif' in rule or
+            ('Bahij TheSansArabic' in rule and re.search(r'font-weight:(200|350|800|900);', rule))
+        ):
+            continue
+        kept.append(rule)
+    return ''.join(kept)
+
+
 def inline_css(path):
     css = path.read_text(encoding="utf-8")
+    if path.name == "fonts.css":
+        css = drop_unused_faces(css)
     css = re.sub(r'@import\s+url\("([^"]+)"\);', lambda m: inline_css((path.parent / m.group(1)).resolve()), css)
     return re.sub(r'url\("(?!data:)([^"]+)"\)',
                   lambda m: f'url("{data_uri((path.parent / m.group(1)).resolve())}")', css)
@@ -48,12 +64,13 @@ ds_dir = "_ds/moe-design-system-ddd98866-727b-4854-b938-95c134b2fa59"
 for tag in [
     f'<script src="{ds_dir}/_ds_bundle.js"></script>\n',
     '<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>\n',
+    '<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>\n',
     '<script src="questionnaires.global.js"></script>\n',
     '<script src="plan-followup.global.js"></script>\n',
     '<script src="asset-map-v2.js"></script>\n',
 ]:
     html = remove_once(html, tag)
-head_scripts = [react, react_dom, DS / "_ds_bundle.js", html2pdf,
+head_scripts = [react, react_dom, DS / "_ds_bundle.js", html2pdf, xlsx,
                 src_dir / "questionnaires.global.js", src_dir / "plan-followup.global.js",
                 src_dir / "asset-map-v2.js"]
 
@@ -81,7 +98,7 @@ html = html.replace("<html>", '<html lang="ar" dir="rtl">', 1)
 # Nothing may still point at a local file or the network.
 leftover = re.findall(r'(?:src|href)="(?!data:|#)([^"{]+\.(?:js|css|png|ttf|woff2))"', html)
 assert not leftover, leftover
-assert "cdn.jsdelivr.net/npm/html2pdf" not in html
+assert "cdn.jsdelivr.net/npm/" not in html
 
 out.write_text(html, encoding="utf-8")
 print(out, round(len(html.encode()) / 1e6, 2), "MB")
