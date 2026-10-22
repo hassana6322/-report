@@ -1055,6 +1055,274 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
         </div>
       </sc-if>
 
+      <sc-if value="{{ hasVariantSwitch }}" hint-placeholder-val="{{ false }}">
+        <div data-tm-chrome="1" style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:14px 18px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px">
+          {{ variantSwitch }}
+          <span style="font-size:12px;line-height:1.8;color:#5c686d">{{ variantHint }}</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isReferral }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;align-items:start">
+          <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+              <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+                <span style="font-size:12px;font-weight:700;color:#5c686d">اسم الطالب</span>
+                <input value="{{ refStudent }}" onChange="{{ onRefStudent }}" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+                <span style="font-size:12px;font-weight:700;color:#5c686d">الصف</span>
+                <div style="display:flex;gap:7px;flex-wrap:wrap">
+                  <sc-for list="{{ refGrades }}" as="g" hint-placeholder-count="3">
+                    <button onClick="{{ g.onClick }}" style="{{ g.style }}">{{ g.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:12px;font-weight:700;color:#5c686d">الفصل</span>
+                <input value="{{ refCls }}" onChange="{{ onRefCls }}" placeholder="مثال: 3" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:12px;font-weight:700;color:#5c686d">اسم المعلم</span>
+                <input value="{{ refTeacher }}" onChange="{{ onRefTeacher }}" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:13px;font-weight:700;color:#15445a">حالات تحال إلى الموجّه الطلابي</span>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <sc-for list="{{ refCChips }}" as="c" hint-placeholder-count="13">
+                  <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ refOtherCOn }}" hint-placeholder-val="{{ false }}">
+                <input value="{{ refOtherC }}" onChange="{{ onRefOtherC }}" placeholder="اكتب الحالة" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </sc-if>
+              <sc-if value="{{ refSensOn }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#fbeaea;border:1px solid #e8c4c4;border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.85;color:#8a2e30;font-weight:700">حالة حساسة: سلّم الاستمارة إلى الموجّه الطلابي مباشرة، ولا تتداولها مع غيره.</div>
+              </sc-if>
+              <div style="background:#e4f0f5;border-radius:12px;padding:9px 13px;font-size:12px;line-height:1.85;color:#15445a">عند الاشتباه بإيذاء أو إهمال يُبلَّغ الموجّه فوراً شفهياً، وفق النموذج الموحد للبلاغات.</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:13px;font-weight:700;color:#15445a">حالات تحال إلى وكيل المدرسة</span>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <sc-for list="{{ refAChips }}" as="c" hint-placeholder-count="11">
+                  <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ refOtherAOn }}" hint-placeholder-val="{{ false }}">
+                <input value="{{ refOtherA }}" onChange="{{ onRefOtherA }}" placeholder="اكتب الحالة" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </sc-if>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:12px;font-weight:700;color:#5c686d">الحصة / المادة</span>
+                <input value="{{ refPeriod }}" onChange="{{ onRefPeriod }}" placeholder="مثال: الثالثة / رياضيات" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:12px;font-weight:700;color:#5c686d">تاريخ الواقعة</span>
+                <input value="{{ refIncident }}" onChange="{{ onRefIncident }}" placeholder="مثال: ١٢ / ٤ / ١٤٤٨" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+                <span style="font-size:12px;font-weight:700;color:#5c686d">وصف مختصر لما لوحظ</span>
+                <textarea value="{{ refDesc }}" onChange="{{ onRefDesc }}" rows="2" maxlength="220" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a;resize:vertical"></textarea>
+              </div>
+            </div>
+
+            <div style="{{ refRecipientStyle }}">
+              <span style="font-size:11.5px;font-weight:700;color:#5c686d">تُوجَّه الإحالة تلقائياً إلى</span>
+              <span style="font-size:14px;font-weight:700;color:#15445a">{{ refRecipient }}</span>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:13px;font-weight:700;color:#15445a">وقد تكرر هذا السلوك منه</span>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <sc-for list="{{ refRepeats }}" as="t" hint-placeholder-count="5">
+                  <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ refRepeatOtherOn }}" hint-placeholder-val="{{ false }}">
+                <input value="{{ refRepeatOther }}" onChange="{{ onRefRepeatOther }}" placeholder="عدد المرات" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#22333a" />
+              </sc-if>
+              <div style="background:#f4f7f8;border:1px solid #dde5e8;border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.85;color:#15445a">
+                <span style="font-weight:700">درجات المخالفات وفق قواعد السلوك والمواظبة:</span>
+                الأولى: حسم درجة واحدة، الثانية: حسم درجتين، الثالثة: حسم 3 درجات، الرابعة: حسم 10 درجات، الخامسة: حسم 15 درجة.
+              </div>
+              <sc-if value="{{ refFirstDegree }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#fdf3e8;border:1px solid #e5c9a2;border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.85;color:#8a5a1f;font-weight:700">المخالفات من الدرجة الأولى مسؤولية المعلم في المرة الأولى والثانية.</div>
+              </sc-if>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-size:13px;font-weight:700;color:#15445a">الإجراءات التي اتخذها المعلم</span>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <sc-for list="{{ refActChips }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+                </sc-for>
+              </div>
+              <span style="font-size:11.5px;color:#5c686d">إجراء آخر</span>
+              <sc-for list="{{ refActions }}" as="a" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <span style="width:28px;height:28px;border-radius:8px;background:#e4f0f5;color:#15445a;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto">{{ a.n }}</span>
+                  <input value="{{ a.value }}" onChange="{{ a.onChange }}" style="flex:1;background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:9px 12px;font-size:13px;font-family:inherit;color:#22333a" />
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:12px;font-weight:700;color:#5c686d">شعار المدرسة</span>
+              <div style="display:flex;gap:8px;align-items:center">
+                <label style="{{ uploadLabelStyle }}">
+                  <span>{{ refLogoLabel }}</span>
+                  <input type="file" accept="image/*" onChange="{{ onSchoolLogo }}" style="display:none" />
+                </label>
+                <sc-if value="{{ hasSchoolLogo }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ clearSchoolLogo }}" style="background:transparent;border:1px solid #e8d0d0;color:#b0393b;border-radius:99px;min-height:40px;padding:0 14px;font-size:12px;cursor:pointer;font-family:inherit">حذف</button>
+                </sc-if>
+              </div>
+            </div>
+
+            <button onClick="{{ exportPdf }}" style="background:#05623c;color:#fff;border:none;border-radius:99px;min-height:44px;padding:0 24px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">تنزيل الاستمارة PDF</button>
+          </div>
+
+          <div ref="{{ panelRef }}" data-print-panel="1" style="display:flex;flex-direction:column;align-items:center;gap:10px;background:#eef2f4;box-shadow:inset 0 0 0 1px #e0e6e9;border-radius:20px;padding:16px;overflow:hidden">
+            <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
+            <div data-print-box="1" style="{{ boxStyle }}">
+              <div data-print-scale="1" style="{{ scaleStyle }}">
+                <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;height:1123px;overflow:hidden;box-sizing:border-box;background:#fff;padding:16px 38px 18px;display:flex;flex-direction:column;gap:5px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
+                  <div style="display:grid;grid-template-columns:190px minmax(0,1fr) 190px;align-items:center;gap:10px">
+                    <div style="display:flex;justify-content:flex-start;align-items:center">{{ refMoeLogoImg }}</div>
+                    <div style="text-align:center;font-size:13.5px;font-weight:700;line-height:1.45;color:#15445a">
+                      <div>المملكة العربية السعودية</div>
+                      <div>وزارة التعليم</div>
+                      <div>الإدارة العامة للتعليم {{ examRegionText }}</div>
+                      <div>{{ examSchool }}</div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;align-items:center">{{ refSchoolLogoImg }}</div>
+                  </div>
+                  <div style="border-top:2px solid #15445a"></div>
+
+                  <div style="display:flex;justify-content:center;padding:1px 0">
+                    <span style="font-size:18px;font-weight:700;color:#15445a;border-bottom:3px solid #0da9a6;padding:0 18px 3px">استمارة إحالة طالب</span>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:3px 14px;font-size:14px;align-items:center">
+                    <span style="font-weight:700;color:#15445a">المكرم الزميل:</span>
+                    <span style="display:flex;align-items:center;gap:7px"><span style="{{ rToARing }}"></span>وكيل المدرسة لشؤون الطلاب</span>
+                    <span style="font-weight:700">المحترم</span>
+                    <span></span>
+                    <span style="display:flex;align-items:center;gap:7px"><span style="{{ rToCRing }}"></span>الموجّه الطلابي</span>
+                    <span style="font-weight:700">المحترم</span>
+                  </div>
+                  <div style="font-size:14px">السلام عليكم ورحمة الله، وبعد:</div>
+                  <div style="font-size:14px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline">
+                    <span>فمن خلال ملاحظاتي المستمرة للطالب/</span>
+                    <span style="font-weight:700;min-width:200px;border-bottom:1px dotted #15445a;padding:0 6px">{{ rStudent }}</span>
+                    <span>بالصف</span>
+                    <span style="font-weight:700;min-width:120px;border-bottom:1px dotted #15445a;padding:0 6px">{{ rGrade }} / {{ rCls }}</span>
+                    <span>اتضح لي ما يلي:</span>
+                  </div>
+                  <div style="font-size:13.5px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline">
+                    <span style="font-weight:700;color:#15445a">الحصة / المادة</span>
+                    <span style="min-width:170px;border-bottom:1px dotted #15445a;padding:0 6px">{{ rPeriod }}</span>
+                    <span style="font-weight:700;color:#15445a;padding-inline-start:16px">تاريخ الواقعة</span>
+                    <span style="min-width:150px;border-bottom:1px dotted #15445a;padding:0 6px">{{ rIncident }}</span>
+                  </div>
+
+                  <div style="border:1px solid #15445a;font-size:13px">
+                    <div style="background:#15445a;color:#fff;font-weight:700;padding:5px 12px;font-size:13.5px">حالات تحال إلى الموجّه الطلابي</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#c9d3d8">
+                      <sc-for list="{{ rCCells }}" as="c" hint-placeholder-count="13">
+                        <div style="{{ c.style }}"><span style="{{ c.ringStyle }}"></span><span>{{ c.label }}</span><span style="{{ c.lineStyle }}">{{ c.lineText }}</span><span style="{{ c.degStyle }}">{{ c.degText }}</span></div>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:1px;font-size:12.5px;font-weight:700;color:#15445a;margin-top:-4px;line-height:1.55">
+                    <span>الحالات الحساسة (الوفاة، الطلاق، الفقر، البكاء، الخوف) تُسلَّم استمارتها للموجّه الطلابي مباشرة ولا تُتداول مع غيره.</span>
+                    <span>عند الاشتباه بإيذاء أو إهمال يُبلَّغ الموجّه فوراً شفهياً، وفق النموذج الموحد للبلاغات.</span>
+                  </div>
+
+                  <div style="border:1px solid #15445a;font-size:13px">
+                    <div style="background:#c1b489;color:#15445a;font-weight:700;padding:5px 12px;font-size:13.5px">حالات تحال إلى وكيل المدرسة</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#c9d3d8">
+                      <sc-for list="{{ rACells }}" as="c" hint-placeholder-count="12">
+                        <div style="{{ c.style }}"><span style="{{ c.ringStyle }}"></span><span>{{ c.label }}</span><span style="{{ c.lineStyle }}">{{ c.lineText }}</span><span style="{{ c.degStyle }}">{{ c.degText }}</span></div>
+                      </sc-for>
+                    </div>
+                    <div style="background:#f4f7f8;padding:3px 10px;font-size:11.5px;line-height:1.5;color:#15445a;white-space:nowrap;overflow:hidden">
+                      <span style="font-weight:700">الرقم = درجة المخالفة في قواعد السلوك والمواظبة. الحسم:</span>
+                      الأولى درجة، الثانية درجتان، الثالثة 3 درجات، الرابعة 10 درجات، الخامسة 15 درجة.
+                    </div>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:3px;font-size:13.5px">
+                    <span style="font-weight:700;color:#15445a">وصف مختصر لما لوحظ:</span>
+                    <span style="border-bottom:1px dotted #9aa8ae;min-height:18px;line-height:1.5">{{ rDesc }}</span>
+                    <span style="border-bottom:1px dotted #9aa8ae;min-height:18px"></span>
+                  </div>
+
+                  <div style="font-size:13.5px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px">
+                    <span style="font-weight:700;color:#15445a">وقد تكرر هذا السلوك منه:</span>
+                    <sc-for list="{{ rRepeats }}" as="t" hint-placeholder-count="5">
+                      <span style="display:flex;align-items:center;gap:6px"><span style="{{ t.ringStyle }}"></span>{{ t.label }}</span>
+                    </sc-for>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:3px;font-size:13.5px">
+                    <span style="font-weight:700;color:#15445a">وقد اتخذت معه الإجراءات التالية (إجراءات المعلم):</span>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 20px;padding:2px 0">
+                      <sc-for list="{{ rActOpts }}" as="o" hint-placeholder-count="4">
+                        <span style="display:flex;align-items:center;gap:6px"><span style="{{ o.ringStyle }}"></span>{{ o.label }}</span>
+                      </sc-for>
+                      <span style="display:flex;align-items:center;gap:6px">إجراء آخر:</span>
+                    </div>
+                    <sc-for list="{{ rActions }}" as="a" hint-placeholder-count="2">
+                      <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;align-items:end;min-height:18px">
+                        <span style="font-weight:700">{{ a.n }}</span>
+                        <span style="border-bottom:1px dotted #9aa8ae;padding-bottom:2px">{{ a.text }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+
+                  <div style="display:flex;justify-content:center;padding-top:1px">
+                    <span style="background:#e4f0f5;border-inline-start:5px solid #15445a;color:#15445a;font-size:13.5px;font-weight:700;padding:5px 18px;border-radius:4px">المخالفات من الدرجة الأولى مسؤولية المعلم في المرة الأولى والثانية..</span>
+                  </div>
+
+                  <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:700;color:#15445a;align-items:end;padding-top:4px">
+                    <span>اسم المعلم <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ rTeacher }}</span></span>
+                    <span style="padding-inline-end:60px">التوقيع</span>
+                  </div>
+
+                  <div style="margin-top:auto;border:1px solid #15445a;font-size:13px">
+                    <div style="background:#15445a;color:#fff;font-weight:700;padding:5px 12px;font-size:13.5px">للاستخدام الإداري — يعبّئه المستلم</div>
+                    <div style="padding:5px 12px;display:flex;flex-direction:column;gap:5px">
+                      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                        <span style="font-weight:700;color:#15445a">المستلم:</span>
+                        <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:11px;height:11px;border-radius:99px;border:1.5px solid #15445a"></span>الموجّه الطلابي</span>
+                        <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:11px;height:11px;border-radius:99px;border:1.5px solid #15445a"></span>وكيل شؤون الطلاب</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:end">
+                        <span style="font-weight:700;color:#15445a">الإجراء المتخذ:</span>
+                        <span style="border-bottom:1px dotted #9aa8ae;min-height:19px"></span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;font-weight:700;color:#15445a;padding-top:2px">
+                        <span>الاسم</span>
+                        <span>التاريخ</span>
+                        <span>التوقيع</span>
+                      </div>
+                    </div>
+                  </div>
+                
+</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ isRulesView }}" hint-placeholder-val="{{ false }}">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;align-items:start">
           <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:16px">
@@ -4139,9 +4407,15 @@ class Component extends DCLogic {
     this.safeSave(this.RULES_KEY, { pick: next.pick, data });
   }
 
+  // «محضر اجتماع اللجنة» و«إحالة طالب»: نموذج معتمد (افتراضي) أو النسخة الموسّعة السابقة
+  rulesExtended(section) {
+    const sec = section || this.state.section;
+    return (sec === 'minutes' || sec === 'referral') && this.rulesState().pick[sec + 'Mode'] === 'extended';
+  }
+
   rulesFormId() {
     const list = this.RULE_SECTIONS[this.state.section];
-    if (!list) return null;
+    if (!list || this.rulesExtended()) return null;
     const pick = this.rulesState().pick[this.state.section];
     return list.indexOf(pick) > -1 ? pick : list[0];
   }
@@ -6396,7 +6670,7 @@ class Component extends DCLogic {
     const titles = {
       home: ['مساعد الموجّه الطلابي', 'منصة تمهيد'],
       session: ['قبل الدخول للجلسة', 'تحضير جلسة إرشادية'],
-      minutes: ['النموذج المعتمد في دليل قواعد السلوك والمواظبة', 'محضر اجتماع لجنة التوجيه الطلابي'],
+      minutes: ['النموذج المعتمد أو النسخة الموسّعة', 'محضر اجتماع لجنة التوجيه الطلابي'],
       letter: ['مراسلات الأسرة', 'رسالة لولي أمر'],
       program: ['نشرة أو نقاط لقاء', 'محتوى برنامج توعوي'],
       exam: ['أسبوعان بتواريخ تُولَّد آلياً', 'جدول الاختبارات'],
@@ -6409,7 +6683,7 @@ class Component extends DCLogic {
       hasr: ['تقرير فوري من نماذج الحصر — يبقى على جهازك', 'حصر معلومات الطلاب'],
       contact: ['نماذج السلوك والمستوى الدراسي والانضباط والنفسي والاجتماعي', 'نماذج التواصل مع ولي الأمر'],
       weekly: ['بين الأسرة والمدرسة — أسبوعًا بأسبوع', 'استمارة المتابعة الأسبوعية'],
-      referral: ['النموذج المعتمد: من وكيل شؤون الطلبة إلى الموجّه الطلابي', 'إحالة طالب'],
+      referral: ['النموذج المعتمد أو استمارة المعلم الموسّعة', 'إحالة طالب'],
       casestudy: ['مسوّدة سرية على جهازك — التوثيق الرسمي في نظام نور', 'استمارة دراسة حالة'],
       about: ['وثيقة تعريفية', 'عن منصة تمهيد']
     };
@@ -6474,12 +6748,12 @@ class Component extends DCLogic {
     const cats = ['الكل', 'جلسة فردية', 'جلسة جماعية', 'محضر', 'مراسلات', 'برامج'];
     const toolDefs = [
       { title: 'تحضير جلسة فردية أو جماعية', desc: 'نقاط حديث وأسئلة مقترحة حسب نوع الحالة، قبل الدخول للجلسة.', key: 'session' },
-      { title: 'محضر اجتماع لجنة التوجيه الطلابي', desc: 'النموذج المعتمد: عناصر الاجتماع، ووصف المشكلة وتصنيفها، وقرارات اللجنة، وأعضاؤها.', key: 'minutes' },
+      { title: 'محضر اجتماع لجنة التوجيه الطلابي', desc: 'النموذج المعتمد لدراسة مشكلة سلوكية، أو محضر موسّع لأي اجتماع بجدول أعمال وتوصيات.', key: 'minutes' },
       { title: 'رسالة لولي أمر', desc: 'صياغة رسالة بلهجة مناسبة لطبيعة الحالة.', key: 'letter' },
       { title: 'محتوى برنامج توعوي', desc: 'نشرة أو نقاط لقاء جاهزة بناءً على هدف البرنامج.', key: 'program' },
       { title: 'متابعة خطة الموجّه الطلابي', desc: 'متابعة إجراءات كل برنامج: نُفّذ أو جارٍ أو لم يُنفّذ، مع التاريخ ومؤشرات الإنجاز، وطباعة الاستمارة.', key: 'followup' },
       { title: 'استمارة دراسة حالة', desc: 'البيانات الأولية والجوانب الأربعة والتشخيص والخطة العلاجية وجلسات المتابعة، في ورقة تُطبع بديباجة المدرسة.', key: 'casestudy' },
-      { title: 'إحالة طالب', desc: 'النموذج السري المعتمد لإحالة الطالب من وكيل شؤون الطلبة إلى الموجّه الطلابي.', key: 'referral' },
+      { title: 'إحالة طالب', desc: 'النموذج السري المعتمد من وكيل شؤون الطلبة، أو استمارة المعلم الموسّعة.', key: 'referral' },
       { title: 'نماذج التواصل مع ولي الأمر', desc: 'تعبئة نموذج السلوك أو انخفاض المستوى الدراسي أو الانضباط المدرسي أو النفسي والاجتماعي، وتنزيله جاهزاً للتوقيع.', key: 'contact' },
       { title: 'استمارة المتابعة الأسبوعية', desc: 'نسخة للأسرة وجزء للمدرسة وتقييم مشترك كل أسبوع، مع سجل يبيّن اتجاه الحالة وتنبيه عند التراجع.', key: 'weekly' },
       { title: 'حصر معلومات الطلاب', desc: 'ارفع ملف نماذج الحصر ليُبنى تقرير بالحالات والتوزيعات وخطة المتابعة، دون حفظ البيانات.', key: 'hasr' },
@@ -6643,10 +6917,26 @@ class Component extends DCLogic {
       ...this.weeklyVals(),
       isContact: s.section === 'contact',
       ...this.contactVals(),
-      isReferral: false, // أُبدل بالنموذج المعتمد (rulesVals)
+      isReferral: s.section === 'referral' && this.rulesExtended('referral'),
       ...this.referralVals(),
-      isTool: ['session', 'letter', 'program'].indexOf(s.section) > -1,
+      isTool: ['session', 'letter', 'program'].indexOf(s.section) > -1 || (s.section === 'minutes' && this.rulesExtended('minutes')),
       ...this.rulesVals(),
+      ...(() => {
+        if (s.section !== 'minutes' && s.section !== 'referral') return { hasVariantSwitch: false };
+        const ext = this.rulesExtended();
+        const pick = mode => () => { const cur = this.rulesState(); this.setRules(Object.assign({}, cur, { pick: Object.assign({}, cur.pick, { [s.section + 'Mode']: mode }) })); };
+        const chip = on => ({ background: on ? '#15445a' : '#fff', color: on ? '#fff' : '#15445a', border: '1px solid ' + (on ? '#15445a' : '#d5d5d5'),
+          borderRadius: 99, minHeight: 40, padding: '0 16px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' });
+        return {
+          hasVariantSwitch: true,
+          variantSwitch: React.createElement('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+            React.createElement('button', { type: 'button', onClick: pick('official'), style: chip(!ext), 'aria-pressed': !ext ? 'true' : 'false' }, 'النموذج المعتمد'),
+            React.createElement('button', { type: 'button', onClick: pick('extended'), style: chip(ext), 'aria-pressed': ext ? 'true' : 'false' }, 'النسخة الموسّعة')),
+          variantHint: s.section === 'minutes'
+            ? (ext ? 'محضر عام لأي اجتماع للجنة: جدول أعمال مقترح، والحاضرون وأدوارهم، والتوصيات والمسؤول عنها.' : 'النموذج المعتمد في دليل قواعد السلوك، لدراسة مشكلة سلوكية في اجتماع اللجنة.')
+            : (ext ? 'استمارة يعبّئها المعلم: نوع المشكلة وما اتخذه من إجراءات، وتوجَّه إلى الموجّه الطلابي أو وكيل شؤون الطلاب.' : 'النموذج السري المعتمد: إحالة من وكيل شؤون الطلبة إلى الموجّه الطلابي.')
+        };
+      })(),
       isExam: s.section === 'exam',
       isPlan: s.section === 'plan',
       plan: s.plan,
