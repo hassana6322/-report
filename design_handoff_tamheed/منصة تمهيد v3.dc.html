@@ -546,7 +546,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                   </sc-if>
                   <div style="text-align:center;font-size:11px;color:#9aa2a6;padding-bottom:14px">مسودة أُعدّت بمنصة تمهيد — للتحضير والصياغة، ويُعتمد التوثيق الرسمي في نظام نور.</div>
                 
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
               </div>
             </div>
@@ -869,7 +868,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
 
 
                 
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ examFooterMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
               </div>
             </div>
@@ -1050,7 +1048,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     </div>
                   </div>
                 
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
               </div>
             </div>
@@ -1312,7 +1309,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     </div>
                   </div>
                 
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
               </div>
             </div>
@@ -1532,7 +1528,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                   <div style="border:1px solid #15445a;display:flex;flex-direction:column">
                     <div style="padding:7px 12px;display:flex;flex-direction:column;gap:1px">
                       <sc-for list="{{ cItems }}" as="it" hint-placeholder-count="11">
-                        <div style="display:grid;grid-template-columns:12px minmax(0,1fr);align-items:start;gap:8px;font-size:14px;line-height:1.5">
+                        <div style="{{ cItemRowStyle }}">
                           <span style="{{ it.boxStyle }}">{{ it.mark }}</span>
                           <span style="display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center">
                             <span>{{ it.text }}</span>
@@ -1551,16 +1547,12 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     </div>
                   </div>
 
-                  <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:4px;padding-bottom:60px;font-size:15px;font-weight:700;color:#15445a">
+                  <div style="{{ cSignStyle }}">
                     <div style="display:flex;align-items:center;gap:8px"><span style="{{ cAckRing }}"></span>أنا ولي أمر الطالب اطلعت وسوف أكون مشارك في حل المشكلة..</div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-end">
                       <span>التوقيع/</span>
                       <span>التوجيه الطلابي</span>
                     </div>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:10px;margin-top:-30px">
-                    <span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span>
-                    <img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" />
                   </div>
                 </div>
               </div>
@@ -1786,12 +1778,11 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     </div>
                   </div>
 
-                  <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;padding:16px 10px 6px;font-size:15px;font-weight:700;color:#15445a">
+                  <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;padding:16px 10px 50px;font-size:15px;font-weight:700;color:#15445a">
                     <div style="display:flex;flex-direction:column;gap:14px"><span>ولي أمر الطالب</span><span>التوقيع/</span></div>
                     <div style="display:flex;flex-direction:column;gap:14px;align-items:center"><span>الموجّه الطلابي</span><span>التوقيع/</span></div>
                   </div>
                 
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
               </div>
             </div>
@@ -2279,7 +2270,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     <span style="padding-inline-end:40px">مدير المدرسة <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ principalName }}</span></span>
                   </div>
                 
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
               </div>
             </div>
@@ -2562,7 +2552,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     <span style="padding-inline-end:40px">مدير المدرسة <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ principalName }}</span></span>
                   </div>
                 
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
               </div>
             </div>
@@ -2932,7 +2921,6 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                       </div>
 
                     
-<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
 </div>
                   </div>
                 </div>
@@ -4742,6 +4730,16 @@ class Component extends DCLogic {
       },
       cNotes: c.notes,
       cItems: sheetItems,
+      // النماذج الطويلة (أكثر من 15 سطرًا مع الخيارات الفرعية) تُضغط قليلًا لتبقى في صفحة واحدة
+      ...(() => { const dense = sheetItems.length + sheetItems.filter(x => x.hasValues).length > 15; return {
+      cItemRowStyle: {
+        display: 'grid', gridTemplateColumns: '12px minmax(0,1fr)', alignItems: 'start', gap: 8,
+        fontSize: dense ? 13 : 14, lineHeight: dense ? 1.35 : 1.5
+      },
+      cSignStyle: {
+        marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4,
+        paddingBottom: dense ? 14 : 60, fontSize: 15, fontWeight: 700, color: '#15445a'
+      } }; })(),
       cOther: c.other,
       cAckRing: ring(false)
     };
@@ -6972,8 +6970,6 @@ class Component extends DCLogic {
         fontSize: 12.5, fontWeight: 700
       },
       examLogoSrc: this.asset(xt.poster ? 'assets/logo/moe-logo-white.png' : 'assets/logo/moe-logo-trimmed.png'),
-      tamheedMarkSrc: this.asset('assets/logo/tamheed-mark.png'),
-      examFooterMarkSrc: this.asset(xt.poster ? 'assets/logo/tamheed-mark-white.png' : 'assets/logo/tamheed-mark.png'),
       examMarkSrc: this.asset(xt.poster ? 'assets/logo/tamheed-mark-white.png' : 'assets/logo/tamheed-mark.png'),
       examPosterLine1Style: { display: 'block', height: 5, width: 32, borderRadius: 99, background: 'linear-gradient(90deg,#69cee3,#5fdda9)' },
       examPosterLine2Style: { display: 'block', height: 5, width: 21, borderRadius: 99, background: '#5fdda9' },
@@ -7038,8 +7034,10 @@ class Component extends DCLogic {
       panelBg: '#e8eaeb',
       previewLabel: pageH > 1180 ? 'معاينة A4 — المحتوى يتجاوز صفحة وسيُقسم في ملف PDF' : 'معاينة بمقاس A4',
       pageStyle: {
-        width: 794, minHeight: 1123, background: '#fff', padding: '46px 54px',
-        display: 'flex', flexDirection: 'column', gap: 20, boxShadow: '0 20px 50px rgba(0,56,69,.18)'
+        width: 794, minHeight: 1123, background: '#fff',
+        // تحضير الجلسة يتجاوز الصفحة ببضعة بكسلات، فتُضيَّق مسافاته ليبقى صفحة واحدة
+        padding: s.section === 'session' ? '34px 50px' : '46px 54px',
+        display: 'flex', flexDirection: 'column', gap: s.section === 'session' ? 14 : 20, boxShadow: '0 20px 50px rgba(0,56,69,.18)'
       },
       boxStyle: { width: 794 * fit + 'px', height: pageH * fit + 'px', flex: '0 0 auto' },
       scaleStyle: { transform: 'scale(' + fit + ')', transformOrigin: 'top right', width: '794px', height: pageH + 'px' },
