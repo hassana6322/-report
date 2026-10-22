@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="_ds/moe-design-system-ddd98866-727b-4854-b938-95c134b2fa59/styles.css">
 <script src="_ds/moe-design-system-ddd98866-727b-4854-b938-95c134b2fa59/_ds_bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="questionnaires.global.js"></script>
 <script src="plan-followup.global.js"></script>
 <script src="asset-map-v2.js"></script>
@@ -206,6 +207,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
       </nav>
 
       <div data-tm-collapse="1" style="margin-top:auto;display:flex;flex-direction:column;gap:14px">
+        <button onClick="{{ onOpenSchoolSetup }}" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:16px;min-height:44px;padding:0 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:start" style-hover="background:rgba(255,255,255,.14)">بيانات المدرسة والشعار</button>
         <button onClick="{{ goAbout }}" style="{{ aboutBtnStyle }}" style-hover="background:#f4f1fb">
           <img src="assets/icons/team-idea.png" alt="" style="{{ aboutIconStyle }}">
           <span style="display:flex;flex-direction:column;gap:3px;text-align:start;min-width:0">
@@ -252,6 +254,23 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
         <div style="{{ headDateStyle }}">{{ todayHijri }}<br>{{ todayGreg }}</div>
       </div>
 
+      <sc-if value="{{ saveErrorOn }}" hint-placeholder-val="{{ false }}">
+        <div data-tm-chrome="1" role="alert" style="background:#fbeaea;border:1px solid #e3b3b3;border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13.5px;line-height:1.9;color:#8a2325;font-weight:700;flex:1 1 260px">تعذّر حفظ بياناتك على هذا الجهاز لأن مساحة المتصفح ممتلئة. صدّر نسخة احتياطية الآن حتى لا تضيع آخر تعديلاتك.</span>
+          <button onClick="{{ onExportData }}" style="background:#a5322f;color:#fff;border:none;border-radius:99px;min-height:42px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">تصدير نسخة احتياطية</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ backupDue }}" hint-placeholder-val="{{ false }}">
+        <div data-tm-chrome="1" style="background:#f7f2e4;border:1px solid #d8c99c;border-radius:16px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;line-height:1.9;color:#5e5023;flex:1 1 260px"><b>{{ backupDueTitle }}</b> بياناتك محفوظة في هذا المتصفح فقط، والنسخة الاحتياطية تحميها إن مُسح المتصفح أو تغيّر الجهاز.</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ onExportData }}" style="background:#15445a;color:#fff;border:none;border-radius:99px;min-height:40px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">تصدير الآن</button>
+            <button onClick="{{ onSnoozeBackup }}" style="background:transparent;border:1px solid #c9b98a;color:#5e5023;border-radius:99px;min-height:40px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">لاحقًا</button>
+          </div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ showCaseNotice }}" hint-placeholder-val="{{ false }}">
         <div style="background:#fdf3e8;border:1px solid #d9a24f;border-radius:16px;padding:14px 18px;margin-bottom:18px;display:flex;flex-direction:column;gap:6px">
           <span style="font-size:13px;font-weight:700;color:#7a4e14">تنبيه بشأن الحالات الحساسة</span>
@@ -261,6 +280,36 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
 
       <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;flex-direction:column;gap:26px">
+          <sc-if value="{{ schoolSetupShow }}" hint-placeholder-val="{{ false }}">
+            <div data-tm-chrome="1" style="background:#fff;border:1px solid #cfe0e6;border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 6px 20px rgba(0,56,69,.10)">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:18px;font-weight:700;color:#15445a">بيانات مدرستك</span>
+                <span style="font-size:13px;line-height:1.9;color:#5c686d">تظهر في ترويسة كل نموذج تطبعه. يمكنك تغييرها لاحقًا من «بيانات المدرسة والشعار» في القائمة.</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#5c686d">اسم المدرسة
+                  <input value="{{ examSchool }}" onChange="{{ onExamSchool }}" placeholder="مثال: ثانوية … " style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;color:#22333a;font-weight:400" />
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#5c686d">الإدارة العامة للتعليم
+                  <input value="{{ examRegion }}" onChange="{{ onExamRegion }}" placeholder="مثال: بالمنطقة الشرقية" style="background:#fff;border:1px solid #d5d5d5;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;color:#22333a;font-weight:400" />
+                </label>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <div style="width:72px;height:72px;border:1px dashed #b8c8ce;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#f6f9fa;overflow:hidden">{{ schoolLogoImg64 }}</div>
+                <label style="display:inline-flex;align-items:center;background:#15445a;color:#fff;border-radius:99px;min-height:42px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer">
+                  {{ refLogoLabel }}
+                  <input type="file" accept="image/*" onChange="{{ onSchoolLogo }}" style="display:none" />
+                </label>
+                <button onClick="{{ onUseImamLogo }}" style="background:#fff;color:#15445a;border:1px solid #15445a;border-radius:99px;min-height:42px;padding:0 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">استخدام شعار ثانوية الإمام</button>
+                <sc-if value="{{ hasSchoolLogo }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ clearSchoolLogo }}" style="background:#fff;border:1px solid #d5d5d5;color:#5c686d;border-radius:99px;min-height:42px;padding:0 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">إزالة الشعار</button>
+                </sc-if>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ onSchoolSetupSave }}" style="background:#05623c;color:#fff;border:none;border-radius:99px;min-height:44px;padding:0 24px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">حفظ</button>
+              </div>
+            </div>
+          </sc-if>
           <div style="border-radius:26px;overflow:hidden;background:linear-gradient(115deg,#351375 0%,#3d7eb9 48%,#0da9a6 100%);position:relative;padding:44px 46px;color:#fff">
             <div style="position:absolute;inset-inline-end:-90px;top:-120px;width:340px;height:210px;border:2px solid rgba(255,255,255,.28);border-radius:999px;transform:rotate(-45deg)"></div>
             <div style="position:relative;max-width:760px">
@@ -496,7 +545,9 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                   </div>
                   </sc-if>
                   <div style="text-align:center;font-size:11px;color:#9aa2a6;padding-bottom:14px">مسودة أُعدّت بمنصة تمهيد — للتحضير والصياغة، ويُعتمد التوثيق الرسمي في نظام نور.</div>
-                </div>
+                
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
               </div>
             </div>
           </div>
@@ -817,7 +868,9 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                   </div>
 
 
-                </div>
+                
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ examFooterMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
               </div>
             </div>
           </div>
@@ -996,7 +1049,9 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                       <div style="font-size:14px;opacity:.9">{{ planPrincipalName }}</div>
                     </div>
                   </div>
-                </div>
+                
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
               </div>
             </div>
           </div>
@@ -1256,7 +1311,9 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                       </div>
                     </div>
                   </div>
-                </div>
+                
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
               </div>
             </div>
           </div>
@@ -1729,11 +1786,13 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     </div>
                   </div>
 
-                  <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;padding:16px 10px 50px;font-size:15px;font-weight:700;color:#15445a">
+                  <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;padding:16px 10px 6px;font-size:15px;font-weight:700;color:#15445a">
                     <div style="display:flex;flex-direction:column;gap:14px"><span>ولي أمر الطالب</span><span>التوقيع/</span></div>
                     <div style="display:flex;flex-direction:column;gap:14px;align-items:center"><span>الموجّه الطلابي</span><span>التوقيع/</span></div>
                   </div>
-                </div>
+                
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
               </div>
             </div>
           </div>
@@ -1743,12 +1802,12 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
       <sc-if value="{{ isHasr }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:16px;max-width:1040px">
           <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px">
-            <p style="margin:0;font-size:13.5px;line-height:1.95;color:#5c686d;text-wrap:pretty">نزّل النموذج الفارغ، وعبّئه ببيانات نماذج الحصر في Excel، ثم احفظه بصيغة CSV UTF-8 وارفعه هنا ليُبنى التقرير.</p>
+            <p style="margin:0;font-size:13.5px;line-height:1.95;color:#5c686d;text-wrap:pretty">نزّل النموذج الفارغ، وعبّئه ببيانات نماذج الحصر في Excel، ثم ارفعه هنا كما هو ليُبنى التقرير. يُقبل ملف Excel أو CSV.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button onClick="{{ onHasrTemplate }}" style="background:#fff;color:#15445a;border:1px solid #15445a;border-radius:99px;min-height:42px;padding:0 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">تنزيل نموذج فارغ</button>
               <label style="display:inline-flex;align-items:center;background:#15445a;color:#fff;border-radius:99px;min-height:42px;padding:0 22px;font-size:13px;font-weight:700;cursor:pointer">
                 رفع ملف الطلاب
-                <input type="file" accept=".csv,text/csv" onChange="{{ onHasrFile }}" style="display:none" />
+                <input type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange="{{ onHasrFile }}" style="display:none" />
               </label>
               <sc-if value="{{ hasrLoaded }}" hint-placeholder-val="{{ false }}">
                 <span style="font-size:12.5px;font-weight:700;color:#15445a">{{ hasrFileLabel }}</span>
@@ -2219,7 +2278,9 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     <span>الموجّه الطلابي <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ cpCounselor }}</span></span>
                     <span style="padding-inline-end:40px">مدير المدرسة <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ principalName }}</span></span>
                   </div>
-                </div>
+                
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
               </div>
             </div>
           </div>
@@ -2500,7 +2561,9 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                     <span>الموجّه الطلابي <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ fCounselorPrint }}</span></span>
                     <span style="padding-inline-end:40px">مدير المدرسة <span style="font-weight:400;color:#22333a;padding-inline-start:6px">{{ principalName }}</span></span>
                   </div>
-                </div>
+                
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
               </div>
             </div>
           </div>
@@ -2868,7 +2931,9 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
                         </div>
                       </div>
 
-                    </div>
+                    
+<div data-tm-footer="1" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:10px"><span style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#218caa 0%,#0da9a6 50%,#5fdda9 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact"></span><img src="{{ tamheedMarkSrc }}" alt="تمهيد" style="height:26px;width:auto;object-fit:contain;display:block;flex:0 0 auto" /></div>
+</div>
                   </div>
                 </div>
               </div>
@@ -2945,7 +3010,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
               <div>
                 <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">المرحلة الحالية</div>
-                <div style="font-size:14.5px;line-height:2;color:rgba(255,255,255,.8)">أداة استخدام شخصي للمرشد الطلابي المكلّف بثانوية الإمام محمد بن سعود بالدمام.</div>
+                <div style="font-size:14.5px;line-height:2;color:rgba(255,255,255,.8)">{{ aboutPersonalLine }}</div>
               </div>
               <div>
                 <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">المرحلة المستقبلية</div>
@@ -3042,9 +3107,15 @@ class Component extends DCLogic {
     consentDate: '',
     policyOpen: false,
     dataNotice: '',
-    form: { name: '', role: 'الموجّه الطلابي', school: 'ثانوية الإمام محمد بن سعود بالدمام', password: '', confirm: '' },
+    form: { name: '', role: 'الموجّه الطلابي', school: '', password: '', confirm: '' },
     section: 'home',
     menuOpen: false,
+    saveError: false,
+    createdAt: '',
+    lastBackup: '',
+    backupSnoozed: false,
+    schoolSetupDone: false,
+    schoolSetupOpen: false,
     zoom: 0.8,
     panelW: 0,
     gridW: 0,
@@ -3078,7 +3149,7 @@ class Component extends DCLogic {
       hy: 1448, hm: 3, hd: 1,
       days: [0, 1, 2, 3, 4], weeks: 2, twoPerDay: false,
       region: 'بالمنطقة الشرقية',
-      school: 'مدرسة الإمام محمد بن سعود الثانوية',
+      school: '',
       subjects: ['القرآن الكريم', 'اللغة العربية', 'الرياضيات', 'الفيزياء', 'الكيمياء', 'الأحياء', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
       subjectsByGrade: {
         'أول ثانوي': ['القرآن الكريم', 'اللغة العربية', 'الرياضيات', 'الفيزياء', 'الكيمياء', 'الأحياء', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
@@ -3436,7 +3507,7 @@ class Component extends DCLogic {
     const next = Object.assign({}, this.caseState(), patch);
     this._case = next;
     this.setState({ caseStudy: next });
-    try { localStorage.setItem(this.CASE_KEY, JSON.stringify(next)); } catch (e) {}
+    this.safeSave(this.CASE_KEY, next);
   }
 
   caseVals() {
@@ -3574,7 +3645,7 @@ class Component extends DCLogic {
     const next = Object.assign({}, this.followState(), patch);
     this._follow = next;
     this.setState({ follow: next });
-    try { localStorage.setItem(this.FOLLOW_KEY, JSON.stringify(next)); } catch (e) {}
+    this.safeSave(this.FOLLOW_KEY, next);
   }
 
   followVals() {
@@ -3807,6 +3878,7 @@ class Component extends DCLogic {
         school: prof.school || this.state.form.school, password: '', confirm: ''
       });
       merged.savedUser = prof;
+      if (!merged.createdAt && merged.passHash) merged.createdAt = new Date().toISOString();
       this.setState(merged);
     }
     if (this.props.startSection) this.setState({ section: this.props.startSection });
@@ -3833,18 +3905,52 @@ class Component extends DCLogic {
   componentDidUpdate() {
     this.measure();
     const s = this.state;
-    try {
-      localStorage.setItem('tamheed.v2', JSON.stringify({
-        section: s.section, session: s.session, minutes: s.minutes,
-        profile: s.user || s.savedUser || null,
-        letter: s.letter, program: s.program, exam: s.exam, plan: s.plan, theme: s.theme, themeMigrated: true, zoom: s.zoom,
-        passHash: s.passHash, consent: s.consent, consentDate: s.consentDate
-      }));
-    } catch (e) {}
+    this.safeSave('tamheed.v2', {
+      section: s.section, session: s.session, minutes: s.minutes,
+      profile: s.user || s.savedUser || null,
+      letter: s.letter, program: s.program, exam: s.exam, plan: s.plan, theme: s.theme, themeMigrated: true, zoom: s.zoom,
+      passHash: s.passHash, consent: s.consent, consentDate: s.consentDate,
+      createdAt: s.createdAt, lastBackup: s.lastBackup, schoolSetupDone: s.schoolSetupDone
+    });
+  }
+
+  // يحفظ في ذاكرة المتصفح؛ إن امتلأت المساحة يُظهر تنبيهًا بدل أن يفشل الحفظ بصمت
+  safeSave(key, value) {
+    let ok = true;
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { ok = false; }
+    if (key === 'tamheed.v2' || !ok) {
+      if (!ok !== !!this.state.saveError) this.setState({ saveError: !ok });
+    }
+    return ok;
+  }
+
+  // يصغّر الصورة قبل حفظها (الشعار) حتى لا تملأ ذاكرة المتصفح
+  shrinkImage(file, max) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onerror = reject;
+      r.onload = () => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const k = Math.min(1, (max || 400) / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * k));
+          c.height = Math.max(1, Math.round(img.height * k));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          let out = c.toDataURL('image/png');
+          if (out.length > 300000) out = c.toDataURL('image/webp', 0.85);
+          resolve(out);
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(file);
+    });
   }
 
   logoImg(src, style) {
-    if (!src) src = this.asset('assets/logo/imam-school-print.png');
+    // بلا شعار مرفوع: مساحة فارغة بالمقاس نفسه حتى لا تختل الترويسة
+    if (!src) return React.createElement('span', { 'aria-hidden': 'true', style: Object.assign({ display: 'inline-block' }, style, { visibility: 'hidden' }) });
     return React.createElement('img', { src: src, alt: 'شعار المدرسة', style: style });
   }
 
@@ -3871,7 +3977,8 @@ class Component extends DCLogic {
       const h = await this.hashPass(f.password);
       const u0 = { name: f.name, role: 'الموجّه الطلابي', school: f.school };
       this.setState({
-        passHash: h, consentDate: this.hijri(new Date()),
+        passHash: h, consentDate: this.hijri(new Date()), createdAt: new Date().toISOString(),
+        exam: Object.assign({}, s.exam, { school: s.exam.school || f.school.trim() }),
         user: u0, savedUser: u0,
         form: Object.assign({}, f, { password: '', confirm: '' }),
         authError: '', section: 'home'
@@ -3916,7 +4023,7 @@ class Component extends DCLogic {
       } else {
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
-      this.setState({ dataNotice: 'تم تصدير نسخة احتياطية. احفظها في مكان آمن.' });
+      this.setState({ dataNotice: 'تم تصدير نسخة احتياطية. احفظها في مكان آمن.', lastBackup: new Date().toISOString(), backupSnoozed: false });
     } catch (e) {
       this.setState({ dataNotice: 'تعذّر التصدير في هذا المتصفح.' });
     }
@@ -3941,7 +4048,7 @@ class Component extends DCLogic {
         if (d.weekly && typeof d.weekly === 'object') this.setWeekly(d.weekly);
         if (Array.isArray(d.surveys)) {
           patch.surveyRecords = d.surveys;
-          try { localStorage.setItem('tamheed.surveys.v1', JSON.stringify(d.surveys)); } catch (e2) {}
+          this.safeSave('tamheed.surveys.v1', d.surveys);
         }
         patch.dataNotice = 'تم استيراد النسخة بنجاح (' + (d.hijri || '') + ').';
         this.setState(patch);
@@ -3960,7 +4067,7 @@ class Component extends DCLogic {
 
   persistSurveys(next) {
     this.setState({ surveyRecords: next });
-    try { localStorage.setItem('tamheed.surveys.v1', JSON.stringify(next)); } catch (e) {}
+    this.safeSave('tamheed.surveys.v1', next);
   }
 
   surveyDef() {
@@ -4279,7 +4386,7 @@ class Component extends DCLogic {
     const next = Object.assign({}, this.weeklyState(), patch);
     this._weekly = next;
     this.setState({ weekly: next });
-    try { localStorage.setItem(this.WEEKLY_KEY, JSON.stringify(next)); } catch (e) {}
+    this.safeSave(this.WEEKLY_KEY, next);
   }
   wkNotice(t) { this.setWeekly({ notice: t }); setTimeout(() => this.setWeekly({ notice: '' }), 3200); }
 
@@ -4476,7 +4583,7 @@ class Component extends DCLogic {
       refNum: r.num, onRefNum: e => this.setRef({ num: e.target.value }),
       refAttach: r.attach, onRefAttach: e => this.setRef({ attach: e.target.value }),
       refFirstDegree: firstTime,
-      refLogoLabel: this.state.exam.logo ? 'تغيير شعار المدرسة' : 'شعار ثانوية الإمام — رفع شعار آخر',
+      refLogoLabel: this.state.exam.logo ? 'تغيير شعار المدرسة' : 'رفع شعار المدرسة',
 
       rDate: this.hijri(new Date()),
       rNum: r.num, rAttach: r.attach,
@@ -4654,10 +4761,22 @@ class Component extends DCLogic {
     const head = this.HASR_COLS.map(c => c[1]).join(',');
     const hint = ['1', '', '1', 'مستقران / منفصلان', 'نعم / لا', 'الأم / الأب / غيرهما', '', 'نعم / لا',
       'أقل من 3000 / 3000-5000 / 5000 فأكثر', '', 'شقة / فيلا / غير ذلك', 'ملك / إيجار', '', '', '', ''].join(',');
-    const blob = new Blob(['\ufeff' + head + '\n' + hint + '\n'], { type: 'text/csv;charset=utf-8' });
+    let blob, name;
+    if (window.XLSX) {
+      const ws = window.XLSX.utils.aoa_to_sheet([head.split(','), hint.split(',')]);
+      ws['!cols'] = this.HASR_COLS.map(() => ({ wch: 18 }));
+      const wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+      const out = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      name = 'نموذج حصر معلومات الطلاب.xlsx';
+    } else {
+      blob = new Blob(['\ufeff' + head + '\n' + hint + '\n'], { type: 'text/csv;charset=utf-8' });
+      name = 'نموذج حصر معلومات الطلاب.csv';
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'نموذج حصر معلومات الطلاب.csv';
+    a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   }
@@ -4707,13 +4826,32 @@ class Component extends DCLogic {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    if (!/\.(csv|txt)$/i.test(file.name)) {
-      this.setHasr({ error: 'الملف يجب أن يكون بصيغة CSV. من Excel اختر: حفظ باسم ← CSV UTF-8.' });
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+    if (!isExcel && !/\.(csv|txt)$/i.test(file.name)) {
+      this.setHasr({ error: 'الملف يجب أن يكون بصيغة Excel (xlsx) أو CSV.' });
+      return;
+    }
+    if (isExcel && !window.XLSX) {
+      this.setHasr({ error: 'تعذّر فتح ملف Excel في هذا المتصفح. احفظه من Excel بصيغة CSV UTF-8 ثم ارفعه.' });
       return;
     }
     const r = new FileReader();
     r.onload = () => {
-      const grid = this.parseCsv(String(r.result || ''));
+      let grid;
+      if (isExcel) {
+        try {
+          const wb = window.XLSX.read(new Uint8Array(r.result), { type: 'array' });
+          const sh = wb.Sheets[wb.SheetNames[0]];
+          grid = window.XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false })
+            .map(row => row.map(c => String(c == null ? '' : c)))
+            .filter(row => row.some(c => c.trim()));
+        } catch (err) {
+          this.setHasr({ error: 'تعذّرت قراءة ملف Excel. تأكد أنه غير محمي بكلمة مرور.' });
+          return;
+        }
+      } else {
+        grid = this.parseCsv(String(r.result || ''));
+      }
       if (grid.length < 2) { this.setHasr({ error: 'لم يُعثر على بيانات طلاب في الملف.' }); return; }
       const head = grid[0].map(h => h.trim());
       const idx = {};
@@ -4734,7 +4872,7 @@ class Component extends DCLogic {
       this.setHasr({ rows: rows, fileName: file.name, error: '', tab: 'overview', query: '' });
     };
     r.onerror = () => this.setHasr({ error: 'تعذّرت قراءة الملف.' });
-    r.readAsText(file, 'utf-8');
+    if (isExcel) r.readAsArrayBuffer(file); else r.readAsText(file, 'utf-8');
   }
 
   hasrFlags(s) {
@@ -6133,12 +6271,30 @@ class Component extends DCLogic {
       dataNotice: s.dataNotice,
       hasDataNotice: !!s.dataNotice,
       showCaseNotice: ['session', 'survey'].indexOf(s.section) > -1,
+      saveErrorOn: !!s.saveError,
+      schoolSetupShow: s.section === 'home' && (!s.schoolSetupDone || s.schoolSetupOpen),
+      onOpenSchoolSetup: () => { this.setState({ section: 'home', schoolSetupOpen: true, menuOpen: false }); window.scrollTo(0, 0); },
+      onSchoolSetupSave: () => this.setState({ schoolSetupDone: true, schoolSetupOpen: false }),
+      onUseImamLogo: () => {
+        fetch(this.asset('assets/logo/imam-school-print.png')).then(r => r.blob())
+          .then(b => this.shrinkImage(b, 400)).then(url => this.set('exam.logo', url)).catch(() => {});
+      },
+      aboutPersonalLine: 'أداة استخدام شخصي للموجّه الطلابي' + ((s.exam.school || '').trim() ? ' في ' + s.exam.school.trim() : '') + '.',
+      ...(() => {
+        const since = s.lastBackup || s.createdAt;
+        const days = since ? Math.floor((Date.now() - new Date(since).getTime()) / 86400000) : 0;
+        return {
+          backupDue: !s.saveError && !s.backupSnoozed && !!since && days >= 7,
+          backupDueTitle: s.lastBackup ? 'آخر نسخة احتياطية قبل ' + (days === 1 ? 'يوم واحد' : days === 2 ? 'يومين' : days <= 10 ? days + ' أيام' : days + ' يومًا') + '.' : 'لم تصدّر نسخة احتياطية بعد.',
+          onSnoozeBackup: () => this.setState({ backupSnoozed: true })
+        };
+      })(),
       schoolLogoImg: this.logoImg(s.exam.logo, { maxWidth: 70, maxHeight: 70, objectFit: 'contain' }),
       schoolLogoImg56: this.logoImg(s.exam.logo, { height: 56, objectFit: 'contain', alignSelf: 'flex-start' }),
       schoolLogoImg74: this.examTokens().poster
         ? (s.exam.logo
             ? this.logoImg(s.exam.logo, { height: 60, width: 'auto', maxWidth: 146, objectFit: 'contain', display: 'block' })
-            : this.logoImg(this.asset('assets/logo/imam-school-white.png'), { height: 84, width: 'auto', maxWidth: 180, objectFit: 'contain' }))
+            : this.logoImg(null, { height: 84, width: 'auto', maxWidth: 180, objectFit: 'contain' }))
         : this.logoImg(s.exam.logo, { height: 70, width: 'auto', maxWidth: 160, objectFit: 'contain' }),
       schoolLogoImg64: this.logoImg(s.exam.logo, { maxWidth: 64, maxHeight: 64, objectFit: 'contain' }),
       schoolLogoImgTall: this.logoImg(s.exam.logo, { maxHeight: 64, objectFit: 'contain' }),
@@ -6146,7 +6302,7 @@ class Component extends DCLogic {
         src: this.asset('assets/logo/moe-logo-trimmed.png'),
         alt: 'وزارة التعليم', style: { height: 84, width: 'auto', maxWidth: 190, objectFit: 'contain', display: 'block' }
       }),
-      refSchoolLogoImg: this.logoImg(s.exam.logo || this.asset('assets/logo/imam-school-print.png'),
+      refSchoolLogoImg: this.logoImg(s.exam.logo,
         { height: 70, width: 'auto', maxWidth: 190, objectFit: 'contain', display: 'block' }),
       moeLogoImg: React.createElement('img', {
         src: this.asset(this.examTokens().poster ? 'assets/logo/moe-logo-white.png' : 'assets/logo/moe-logo-trimmed.png'),
@@ -6698,9 +6854,8 @@ class Component extends DCLogic {
       onSchoolLogo: ev => {
         const file = ev.target.files && ev.target.files[0];
         if (!file) return;
-        const r = new FileReader();
-        r.onload = () => this.set('exam.logo', r.result);
-        r.readAsDataURL(file);
+        ev.target.value = '';
+        this.shrinkImage(file, 400).then(url => this.set('exam.logo', url), () => {});
       },
       clearSchoolLogo: () => this.set('exam.logo', null),
       uploadLabelStyle: {
@@ -6818,6 +6973,7 @@ class Component extends DCLogic {
       },
       examLogoSrc: this.asset(xt.poster ? 'assets/logo/moe-logo-white.png' : 'assets/logo/moe-logo-trimmed.png'),
       tamheedMarkSrc: this.asset('assets/logo/tamheed-mark.png'),
+      examFooterMarkSrc: this.asset(xt.poster ? 'assets/logo/tamheed-mark-white.png' : 'assets/logo/tamheed-mark.png'),
       examMarkSrc: this.asset(xt.poster ? 'assets/logo/tamheed-mark-white.png' : 'assets/logo/tamheed-mark.png'),
       examPosterLine1Style: { display: 'block', height: 5, width: 32, borderRadius: 99, background: 'linear-gradient(90deg,#69cee3,#5fdda9)' },
       examPosterLine2Style: { display: 'block', height: 5, width: 21, borderRadius: 99, background: '#5fdda9' },
