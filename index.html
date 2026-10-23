@@ -10159,7 +10159,8 @@ class Component extends DCLogic {
       weekly: Object.assign({}, this.weeklyState(), { notice: '' }),
       surveys: s.surveyRecords,
       rules: this.rulesState(),
-      cases: this.casesState()
+      cases: this.casesState(),
+      students: this.studentsState()
     };
     try {
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -10200,6 +10201,7 @@ class Component extends DCLogic {
         if (d.caseStudy && typeof d.caseStudy === 'object') this.setCase(d.caseStudy);
         if (d.weekly && typeof d.weekly === 'object') this.setWeekly(d.weekly);
         if (d.rules && typeof d.rules === 'object') this.setRules(Object.assign({ pick: {}, data: {} }, d.rules));
+        if (Array.isArray(d.students)) this.setStudents(d.students.filter(x => x && x.name));
         if (Array.isArray(d.cases)) this.setCases(d.cases.filter(c => c && c.id && this.PROCEDURES[c.procId]));
         if (Array.isArray(d.surveys)) {
           patch.surveyRecords = d.surveys;
@@ -10806,7 +10808,7 @@ class Component extends DCLogic {
   helperUi() {
     const h = this.state.helper || {};
     return Object.assign({ view: 'list', caseId: '', q: '', showClosed: false, temp: null, msg: '', copied: '' }, h, {
-      draft: Object.assign({ group: 'absUn', level: '3', degree: '1', rep: 0, problem: '', name: '', grade: '', sec: '', guardian: '', phone: '' }, h.draft || {})
+      draft: Object.assign({ group: 'absUn', level: '3', degree: '1', rep: 0, problem: '', name: '', nid: '', grade: '', sec: '', guardian: '', phone: '' }, h.draft || {})
     });
   }
 
@@ -10880,11 +10882,11 @@ class Component extends DCLogic {
     if (d.group === 'behavior' && !problem) { this.setHelper({ msg: 'اختر المشكلة السلوكية.' }); return; }
     const c = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      student: { name: d.name.trim(), grade: d.grade, sec: d.sec.trim(), guardian: d.guardian.trim(), phone: d.phone.trim() },
+      student: { name: d.name.trim(), nid: String(d.nid || '').trim(), grade: d.grade, sec: d.sec.trim(), guardian: d.guardian.trim(), phone: d.phone.trim() },
       procId, problem, openedAt: new Date().toISOString(), steps: {}, history: [], closedAt: ''
     };
     this.setCases(this.casesState().concat([c]));
-    this.setHelper({ view: 'case', caseId: c.id, temp: null, msg: '', draft: Object.assign({}, d, { rep: 0, name: '', sec: '', guardian: '', phone: '', problem: '' }) });
+    this.setHelper({ view: 'case', caseId: c.id, temp: null, msg: '', draft: Object.assign({}, d, { rep: 0, name: '', nid: '', sec: '', guardian: '', phone: '', problem: '' }) });
   }
 
   helperEditCase(c, fn) {
@@ -10930,7 +10932,8 @@ class Component extends DCLogic {
     const pick = Object.assign({}, cur.pick, { [sec]: fid });
     if (sec === 'minutes' || sec === 'referral') pick[sec + 'Mode'] = 'official';
     const data = Object.assign({}, cur.data);
-    const st = (c && c.student) || {};
+    const st = Object.assign({}, c && c.student && this.rosterFind(c.student.name) || {});
+    Object.keys((c && c.student) || {}).forEach(k => { if (c.student[k]) st[k] = c.student[k]; });
     if (!def.blank && st.name) {
       const p = this.PROCEDURES[c.procId] || {};
       const deg = p.degree ? (p.degree === '4s' ? 'الرابعة' : this.DEGREES.find(x => x[0] === p.degree)[1]) : '';
@@ -10997,11 +11000,14 @@ class Component extends DCLogic {
     const cur = this.helperCurrent();
 
     const tabs = R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
-      R('button', { type: 'button', style: chip(h.view !== 'new'), onClick: () => this.setHelper({ view: 'list', temp: null, msg: '' }) }, 'الحالات المفتوحة (' + open.length + ')'),
-      R('button', { type: 'button', style: chip(h.view === 'new'), onClick: () => this.setHelper({ view: 'new', temp: null, msg: '' }) }, '+ ابدأ إجراءً جديدًا'));
+      R('button', { type: 'button', style: chip(h.view !== 'new' && h.view !== 'roster'), onClick: () => this.setHelper({ view: 'list', temp: null, msg: '' }) }, 'الحالات المفتوحة (' + open.length + ')'),
+      R('button', { type: 'button', style: chip(h.view === 'new'), onClick: () => this.setHelper({ view: 'new', temp: null, msg: '' }) }, '+ ابدأ إجراءً جديدًا'),
+      R('button', { type: 'button', style: chip(h.view === 'roster'), onClick: () => this.setHelper({ view: 'roster', temp: null, msg: '' }) }, 'سجل الطلاب (' + this.studentsState().length + ')'));
 
     let body;
-    if (h.view === 'new') {
+    if (h.view === 'roster') {
+      body = this.rosterView();
+    } else if (h.view === 'new') {
       const d = h.draft;
       const setD = patch => this.setHelper({ draft: Object.assign({}, d, patch), msg: '' });
       const grades = ['أول ثانوي', 'ثاني ثانوي', 'ثالث ثانوي'];
@@ -11048,10 +11054,15 @@ class Component extends DCLogic {
         parts.push(R('div', { key: 'sn', style: { background: '#fdf0f0', border: '1px solid #ecc5c5', borderRadius: 14, padding: '12px 14px', fontSize: 13, lineHeight: 1.9, color: '#8a2325' } },
           'حالة حساسة: لا يُطلب اسم الطالب، ولا تُحفظ الحالة على الجهاز. تظهر الخطوات للاسترشاد فقط حتى تغلق الصفحة، والتوثيق في نظام نور ولدى الجهات المختصة.'));
       } else {
-        const pickKnown = nm => { const k = known.find(x => x.name === nm.trim()); return k ? { grade: k.grade || d.grade, sec: k.sec || '', guardian: k.guardian || '', phone: k.phone || '' } : {}; };
+        const pickKnown = nm => {
+          const k = this.rosterFind(nm) || known.find(x => x.name === nm.trim());
+          return k ? { nid: k.nid || '', grade: k.grade || d.grade, sec: k.sec || '', guardian: k.guardian || '', phone: k.phone || '' } : {};
+        };
+        const roster = this.studentsState();
         parts.push(R('div', { key: 'st', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12 } },
           fieldBox('اسم الطالب', R('input', { value: d.name, list: 'tm-helper-names', placeholder: 'الاسم الرباعي', onChange: e => setD(Object.assign({ name: e.target.value, rep: 0 }, pickKnown(e.target.value))), style: input }), true),
-          R('datalist', { id: 'tm-helper-names' }, known.map(k => R('option', { key: k.name, value: k.name }))),
+          R('datalist', { id: 'tm-helper-names' }, (roster.length ? roster : known).map((k, i) => R('option', { key: i, value: k.name }, [k.grade, k.sec].filter(Boolean).join(' / ')))),
+          fieldBox('رقم الهوية', R('input', { value: d.nid, inputMode: 'numeric', dir: 'ltr', onChange: e => setD({ nid: e.target.value }), style: input })),
           fieldBox('الصف', R('select', { value: d.grade, onChange: e => setD({ grade: e.target.value }), style: input },
             [R('option', { key: '', value: '' }, '—')].concat(grades.map(g => R('option', { key: g, value: g }, g))))),
           fieldBox('الفصل', R('input', { value: d.sec, onChange: e => setD({ sec: e.target.value }), style: input })),
@@ -11168,7 +11179,8 @@ class Component extends DCLogic {
       sheet = R('div', { style: { display: 'flex', flexDirection: 'column', gap: long ? 7 : 10, flex: 1, fontSize: 13.5 } },
         p.sensitive ? null : R('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px' } },
           kv('اسم الطالب', st.name), kv('الصف / الفصل', [st.grade, st.sec].filter(Boolean).join(' / ')),
-          kv('ولي الأمر', st.guardian), kv('تاريخ فتح الحالة', sc.openedAt ? fmt(sc.openedAt) : ''),
+          kv('رقم الهوية', st.nid), kv('ولي الأمر', st.guardian),
+          kv('جوال ولي الأمر', st.phone), kv('تاريخ فتح الحالة', sc.openedAt ? fmt(sc.openedAt) : ''),
           sc.problem ? R('div', { style: { gridColumn: '1 / -1' } }, kv('المشكلة', sc.problem)) : null),
         R('div', { style: { fontSize: 12, color: '#5c686d' } }, 'المرجع: ' + p.source + ' — دليل قواعد السلوك والمواظبة لطلبة التعليم العام (الإصدار الخامس 1447هـ)'),
         p.lead ? R('div', { style: { fontWeight: 700, color: ink, fontSize: fs, lineHeight: 1.7 } }, p.lead) : null,
@@ -11208,7 +11220,10 @@ class Component extends DCLogic {
         R('div', { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
           R('span', { style: { fontSize: 18, fontWeight: 700, color: ink } }, 'مهام المرشد المساعد'),
           R('span', { style: { fontSize: 13, color: '#5c686d', lineHeight: 1.8 } }, open.length ? 'لديك ' + (open.length === 1 ? 'حالة مفتوحة واحدة' : open.length === 2 ? 'حالتان مفتوحتان' : open.length + (open.length <= 10 ? ' حالات مفتوحة' : ' حالة مفتوحة')) + '. هذه خطواتها التالية:' : 'عند غياب طالب أو مخالفة سلوكية، ابدأ إجراءً وسأعرض لك خطوات الدليل بالترتيب، مع النماذج جاهزة.')),
-        R('button', { type: 'button', onClick: () => go({ view: 'new' }), style: { background: '#05623c', color: '#fff', border: 'none', borderRadius: 99, minHeight: 42, padding: '0 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } }, '+ ابدأ إجراءً')),
+        R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+          R('button', { type: 'button', 'data-home-roster': '1', onClick: () => go({ view: 'roster' }), style: { background: '#fff', color: ink, border: '1px solid ' + ink, borderRadius: 99, minHeight: 42, padding: '0 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } },
+            this.studentsState().length ? 'سجل الطلاب (' + this.studentsState().length + ')' : 'رفع ملف الطلاب'),
+          R('button', { type: 'button', onClick: () => go({ view: 'new' }), style: { background: '#05623c', color: '#fff', border: 'none', borderRadius: 99, minHeight: 42, padding: '0 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } }, '+ ابدأ إجراءً'))),
       items.map(c => {
         const p = this.PROCEDURES[c.procId], ni = this.helperNextIndex(c);
         return R('button', { key: c.id, type: 'button', onClick: () => go({ view: 'case', caseId: c.id }), style: {
@@ -11217,6 +11232,217 @@ class Component extends DCLogic {
           R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, ni > -1 ? 'التالي: ' + (p.steps[ni].text.length > 90 ? p.steps[ni].text.slice(0, 90) + '…' : p.steps[ni].text) : 'اكتملت الخطوات — راجع الانتقال للمستوى التالي أو أغلق الحالة.'),
           R('span', { style: { fontSize: 11.5, color: '#7a868b' } }, 'آخر إجراء ' + this.helperDaysAgo(this.helperLastTouch(c))));
       }));
+  }
+
+  // ===== سجل الطلاب: يُرفع مرة واحدة من Excel، ويُستخدم للتعبئة التلقائية =====
+  STUDENTS_KEY = 'tamheed.students.v1';
+
+  studentsState() {
+    if (this._students) return this._students;
+    let r = null;
+    try { r = JSON.parse(localStorage.getItem(this.STUDENTS_KEY) || 'null'); } catch (e) {}
+    this._students = Array.isArray(r) ? r.filter(x => x && x.name) : [];
+    return this._students;
+  }
+
+  setStudents(next) {
+    this._students = next;
+    this._rosterIdx = null;
+    this.setState({ studentsTick: (this.state.studentsTick || 0) + 1 });
+    return this.safeSave(this.STUDENTS_KEY, next);
+  }
+
+  normName(t) {
+    return String(t || '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[ً-ْ]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  rosterFind(name) {
+    const n = this.normName(name);
+    if (!n) return null;
+    if (!this._rosterIdx) {
+      this._rosterIdx = {};
+      this.studentsState().forEach(s => { const k = this.normName(s.name); if (!this._rosterIdx[k]) this._rosterIdx[k] = s; });
+    }
+    return this._rosterIdx[n] || null;
+  }
+
+  rosterDatalist(id) {
+    const R = React.createElement;
+    return R('datalist', { id: id || 'tm-roster' }, this.studentsState().map((s, i) =>
+      R('option', { key: i, value: s.name }, [s.grade, s.sec].filter(Boolean).join(' / '))));
+  }
+
+  // بيانات الطالب من السجل لحقول النماذج الرسمية؛ لا يُكتب إلا في الحقول الفارغة
+  rosterFillFor(name, d) {
+    const s = this.rosterFind(name);
+    if (!s) return {};
+    const fill = { grade: s.grade, cls: s.sec, gradeSec: [s.grade, s.sec].filter(Boolean).join(' / '), stage: 'الثانوية',
+      gName: s.guardian, guardian: s.guardian, gMobile: s.phone };
+    const out = {};
+    Object.keys(fill).forEach(k => { if (fill[k] && !String((d || {})[k] || '').trim()) out[k] = fill[k]; });
+    return out;
+  }
+
+  // يقرأ ملف Excel أو CSV ويعيد جدولًا (صفوفًا من النصوص)
+  readSheetFile(file) {
+    return new Promise((resolve, reject) => {
+      const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+      if (!isExcel && !/\.(csv|txt)$/i.test(file.name)) { reject(new Error('الملف يجب أن يكون بصيغة Excel (xlsx) أو CSV.')); return; }
+      if (isExcel && !window.XLSX) { reject(new Error('تعذّر فتح ملف Excel في هذا المتصفح. احفظه من Excel بصيغة CSV UTF-8 ثم ارفعه.')); return; }
+      const r = new FileReader();
+      r.onload = () => {
+        if (!isExcel) { resolve(this.parseCsv(String(r.result || ''))); return; }
+        try {
+          const wb = window.XLSX.read(new Uint8Array(r.result), { type: 'array' });
+          const sh = wb.Sheets[wb.SheetNames[0]];
+          resolve(window.XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false })
+            .map(row => row.map(c => String(c == null ? '' : c)))
+            .filter(row => row.some(c => c.trim())));
+        } catch (err) {
+          reject(new Error('تعذّرت قراءة ملف Excel. تأكد أنه غير محمي بكلمة مرور.'));
+        }
+      };
+      r.onerror = () => reject(new Error('تعذّرت قراءة الملف.'));
+      if (isExcel) r.readAsArrayBuffer(file); else r.readAsText(file, 'utf-8');
+    });
+  }
+
+  ROSTER_COLS = [['name', 'اسم الطالب'], ['nid', 'رقم الهوية'], ['grade', 'الصف'], ['sec', 'الفصل'], ['guardian', 'اسم ولي الأمر'], ['phone', 'جوال ولي الأمر']];
+
+  rosterParse(grid) {
+    const digits = t => String(t || '').replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 0x660)).replace(/[۰-۹]/g, c => String(c.charCodeAt(0) - 0x6F0));
+    const clean = t => digits(t).replace(/\s+/g, ' ').trim();
+    const kind = h => {
+      const t = this.normName(h);
+      if (!t) return '';
+      if (/جوال|هاتف|موبايل|تواصل/.test(t)) return 'phone';
+      if (/ولي/.test(t)) return 'guardian';
+      if (/هويه|السجل المدني|السجل|اقامه|الهويه/.test(t)) return 'nid';
+      if (/اسم الطالب|^الاسم$|^اسم$|الاسم الرباعي|اسم الطالبه/.test(t)) return 'name';
+      if (/الفصل|الشعبه/.test(t)) return 'sec';
+      if (/الصف|المستوي/.test(t)) return 'grade';
+      return '';
+    };
+    let hi = -1, idx = {};
+    for (let i = 0; i < Math.min(10, grid.length); i++) {
+      const m = {};
+      grid[i].forEach((h, j) => { const k = kind(h); if (k && m[k] == null) m[k] = j; });
+      if (m.name != null) { hi = i; idx = m; break; }
+    }
+    if (hi < 0) return { error: 'لم أجد عمود «اسم الطالب» في أول صفوف الملف. نزّل النموذج الفارغ وانسخ البيانات إليه ثم ارفعه.' };
+    const grade = g => {
+      const t = this.normName(digits(g));
+      if (!t) return '';
+      if (/ثالث|^3$|\b3\b/.test(t)) return 'ثالث ثانوي';
+      if (/ثاني|ثان\b|^2$|\b2\b/.test(t)) return 'ثاني ثانوي';
+      if (/اول|^1$|\b1\b/.test(t)) return 'أول ثانوي';
+      return String(g).trim();
+    };
+    const seen = {};
+    const rows = [];
+    let skipped = 0;
+    grid.slice(hi + 1).forEach(cells => {
+      const get = k => (idx[k] != null ? clean(cells[idx[k]]) : '');
+      const name = get('name');
+      if (!name || /^\d+$/.test(name) || name.split(' ').length < 2) { skipped++; return; }
+      const s = { name, nid: get('nid').replace(/\D/g, ''), grade: grade(get('grade')), sec: get('sec'), guardian: get('guardian'), phone: get('phone').replace(/[^\d+]/g, '') };
+      const key = s.nid || this.normName(name);
+      if (seen[key]) { skipped++; return; }
+      seen[key] = 1;
+      rows.push(s);
+    });
+    if (!rows.length) return { error: 'لم أجد أسماء طلاب في الملف.' };
+    return { rows, skipped, cols: Object.keys(idx) };
+  }
+
+  onRosterFile(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    this.setHelper({ rosterError: '', rosterPreview: null });
+    this.readSheetFile(file).then(grid => {
+      const res = this.rosterParse(grid);
+      if (res.error) { this.setHelper({ rosterError: res.error, rosterPreview: null }); return; }
+      this.setHelper({ rosterPreview: Object.assign({ fileName: file.name }, res), rosterError: '' });
+    }, err => this.setHelper({ rosterError: err.message, rosterPreview: null }));
+  }
+
+  rosterTemplate() {
+    const head = this.ROSTER_COLS.map(c => c[1]);
+    const hint = ['محمد أحمد علي القحطاني', '1xxxxxxxxx', 'أول ثانوي', '1', 'أحمد علي القحطاني', '05xxxxxxxx'];
+    let blob;
+    const name = 'نموذج سجل الطلاب.xlsx';
+    if (window.XLSX) {
+      const ws = window.XLSX.utils.aoa_to_sheet([head, hint]);
+      ws['!cols'] = head.map((_, i) => ({ wch: i === 0 || i === 4 ? 30 : 16 }));
+      const wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+      blob = new Blob([window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    } else {
+      blob = new Blob(['﻿' + head.join(',') + '\n' + hint.join(',') + '\n'], { type: 'text/csv' });
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = window.XLSX ? name : name.replace('.xlsx', '.csv');
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  rosterView() {
+    const R = React.createElement, ink = '#15445a';
+    const h = this.helperUi(), list = this.studentsState();
+    const btn = (bg, fg, bd) => ({ background: bg, color: fg, border: bd ? '1px solid ' + bd : 'none', borderRadius: 99, minHeight: 40, padding: '0 16px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' });
+    const input = { background: '#fff', border: '1px solid #d5d5d5', borderRadius: 12, padding: '10px 12px', fontSize: 13.5, fontFamily: 'inherit', color: '#22333a', width: '100%', boxSizing: 'border-box' };
+    const byGrade = arr => {
+      const m = {};
+      arr.forEach(s => { const g = s.grade || 'بدون صف'; m[g] = (m[g] || 0) + 1; });
+      const order = ['أول ثانوي', 'ثاني ثانوي', 'ثالث ثانوي'];
+      return Object.keys(m).sort((a, b) => ((order.indexOf(a) + 1) || 9) - ((order.indexOf(b) + 1) || 9)).map(g => g + ': ' + m[g]).join(' — ');
+    };
+    const pv = h.rosterPreview;
+    const q = this.normName(h.rosterQ || '');
+    const qd = String(h.rosterQ || '').replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 0x660)).trim();
+    const hits = !q ? list.slice(0, 50) : list.filter(s => this.normName(s.name).indexOf(q) > -1 || (qd && /^\d+$/.test(qd) && String(s.nid || '').indexOf(qd) > -1)).slice(0, 50);
+    const th = { background: ink, color: '#fff', fontWeight: 700, fontSize: 12, padding: '6px 6px', textAlign: 'start' };
+    const td = { borderBottom: '1px solid #e8eaeb', padding: '6px 6px', fontSize: 12.5, verticalAlign: 'top' };
+    return R('div', { 'data-roster': '1', style: { display: 'flex', flexDirection: 'column', gap: 14 } },
+      R('div', { style: { background: '#e4f0f5', borderRadius: 12, padding: '11px 14px', fontSize: 12.5, lineHeight: 1.9, color: ink } },
+        'ارفع ملف الطلاب مرة واحدة (Excel)، وبعدها يكفي أن تكتب اسم الطالب في المرشد المساعد أو في النماذج الرسمية لتكتمل بياناته. ',
+        R('b', null, 'البيانات تُحفظ في متصفح هذا الجهاز فقط وتحتوي أرقام هوية: '), 'احمِ الجهاز بكلمة مرور، وصدّر نسخة احتياطية بعد الرفع.'),
+      R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+        R('label', { style: btn(ink, '#fff') }, list.length ? 'رفع ملف جديد (يستبدل القائمة)' : 'رفع ملف الطلاب (Excel)',
+          R('input', { type: 'file', 'data-roster-file': '1', accept: '.xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel', onChange: e => this.onRosterFile(e), style: { display: 'none' } })),
+        R('button', { type: 'button', style: btn('#fff', ink, ink), onClick: () => this.rosterTemplate() }, 'تنزيل نموذج فارغ')),
+      R('div', { style: { fontSize: 12, color: '#5c686d', lineHeight: 1.8 } }, 'الأعمدة المعروفة: ' + this.ROSTER_COLS.map(c => c[1]).join('، ') + '. يكفي عمود الاسم، وأتعرّف على ملف نور وعلى العناوين القريبة منها.'),
+      h.rosterError ? R('div', { role: 'alert', style: { color: '#8a2325', fontSize: 13, fontWeight: 700 } }, h.rosterError) : null,
+      pv ? R('div', { 'data-roster-preview': '1', style: { background: '#f0fafa', border: '1px solid #9fd8d6', borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 } },
+        R('b', { style: { color: '#0a5f5d', fontSize: 14 } }, 'وُجد ' + pv.rows.length + ' طالبًا في الملف «' + pv.fileName + '»'),
+        R('span', { style: { fontSize: 12.5, color: '#3d4a50' } }, byGrade(pv.rows)),
+        R('span', { style: { fontSize: 12, color: '#5c686d' } }, 'الأعمدة التي قرأتها: ' + pv.cols.map(k => (this.ROSTER_COLS.find(c => c[0] === k) || [k, k])[1]).join('، ') + (pv.skipped ? ' — تجاهلت ' + (pv.skipped === 1 ? 'سطرًا واحدًا' : pv.skipped === 2 ? 'سطرين' : pv.skipped + (pv.skipped <= 10 ? ' أسطر' : ' سطرًا')) + ' فارغًا أو مكررًا أو بلا اسم' : '')),
+        R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+          R('button', { type: 'button', style: btn('#05623c', '#fff'), onClick: () => {
+            const ok = this.setStudents(pv.rows);
+            this.setHelper({ rosterPreview: null, rosterError: ok ? '' : 'امتلأت ذاكرة المتصفح ولم يُحفظ السجل. احذف الشعار أو صدّر نسخة احتياطية وامسح بيانات قديمة.', rosterQ: '' });
+          } }, 'اعتماد القائمة'),
+          R('button', { type: 'button', style: btn('#fff', '#5c686d', '#d5d5d5'), onClick: () => this.setHelper({ rosterPreview: null }) }, 'إلغاء'))) : null,
+      list.length ? R('div', { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+        R('div', { 'data-roster-count': list.length, style: { fontSize: 13, fontWeight: 700, color: ink } }, 'في السجل ' + list.length + ' طالبًا — ' + byGrade(list)),
+        R('input', { value: h.rosterQ || '', placeholder: 'بحث بالاسم أو رقم الهوية', onChange: e => this.setHelper({ rosterQ: e.target.value }), style: input }),
+        R('div', { style: { overflowX: 'auto' } }, R('table', { style: { borderCollapse: 'collapse', width: '100%', minWidth: 480 } },
+          R('thead', null, R('tr', null, ['الاسم (اضغط لبدء إجراء)', 'الهوية', 'الصف / الفصل', 'ولي الأمر', 'الجوال'].map((t, i) => R('th', { key: i, style: th }, t)))),
+          R('tbody', null, hits.map((s, i) => R('tr', { key: i },
+            R('td', { style: td }, R('button', { type: 'button', title: 'ابدأ إجراءً لهذا الطالب',
+              onClick: () => this.setHelper({ view: 'new', temp: null, msg: '', draft: Object.assign({}, this.helperUi().draft, { name: s.name, nid: s.nid, grade: s.grade, sec: s.sec, guardian: s.guardian, phone: s.phone, rep: 0 }) }),
+              style: { background: 'none', border: 'none', padding: 0, margin: 0, fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700, color: '#05623c', textDecoration: 'underline', cursor: 'pointer', textAlign: 'start' } }, s.name)),
+            R('td', { style: Object.assign({}, td, { whiteSpace: 'nowrap' }), dir: 'ltr' }, s.nid || '—'),
+            R('td', { style: td }, [s.grade, s.sec].filter(Boolean).join(' / ') || '—'),
+            R('td', { style: td }, s.guardian || '—'),
+            R('td', { style: Object.assign({}, td, { whiteSpace: 'nowrap' }), dir: 'ltr' }, s.phone || '—')))))),
+        hits.length === 50 ? R('span', { style: { fontSize: 12, color: '#5c686d' } }, 'يظهر أول 50 فقط. اكتب جزءًا من الاسم لتضييق النتائج.') : null,
+        !hits.length ? R('span', { style: { fontSize: 13, color: '#5c686d' } }, 'لا يوجد طالب بهذا البحث.') : null,
+        R('button', { type: 'button', style: Object.assign(btn('#fff', '#8a2325', '#ecc5c5'), { alignSelf: 'flex-start' }), onClick: () => {
+          if (window.confirm('حذف سجل الطلاب كاملًا (' + list.length + ' طالبًا) من هذا الجهاز؟ لن تُحذف الحالات المفتوحة.')) this.setStudents([]);
+        } }, 'حذف السجل')) : (pv ? null : R('div', { style: { fontSize: 13, color: '#5c686d' } }, 'السجل فارغ.')));
   }
 
   // أي النماذج يظهر في كل قسم
@@ -11280,7 +11506,8 @@ class Component extends DCLogic {
       borderRadius: 99, minHeight: 38, padding: '0 14px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer'
     });
     const field = (f, key) => R('div', { key, style: { display: 'flex', flexDirection: 'column', gap: 6, gridColumn: f.w ? '1 / -1' : 'auto' } },
-      lab(f.label), R('input', { value: v(f.k), onChange: e => set({ [f.k]: e.target.value }), style: inputStyle }));
+      lab(f.label), R('input', { value: v(f.k), list: f.k === 'name' && !def.blank && this.studentsState().length ? 'tm-roster' : undefined,
+        onChange: e => set(Object.assign({ [f.k]: e.target.value }, f.k === 'name' && !def.blank ? this.rosterFillFor(e.target.value, d) : {})), style: inputStyle }));
     const tableRows = b => {
       const rows = Array.isArray(d[b.k]) ? d[b.k] : [];
       return Array.from({ length: b.rows }, (_, i) => b.cols.map((c, j) => {
@@ -11488,7 +11715,7 @@ class Component extends DCLogic {
         key: fid, type: 'button', style: chip(fid === id),
         onClick: () => { const cur = this.rulesState(); this.setRules(Object.assign({}, cur, { pick: Object.assign({}, cur.pick, { [s.section]: fid }) })); }
       }, this.RULE_FORMS[fid].short))),
-      rulesForm: R('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } }, formParts),
+      rulesForm: R('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } }, formParts, def.blank ? null : this.rosterDatalist()),
       rulesSecret: def.secret || '',
       rulesHasSecret: !!def.secret,
       rulesTitle: def.title,
@@ -12199,32 +12426,7 @@ class Component extends DCLogic {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
-    if (!isExcel && !/\.(csv|txt)$/i.test(file.name)) {
-      this.setHasr({ error: 'الملف يجب أن يكون بصيغة Excel (xlsx) أو CSV.' });
-      return;
-    }
-    if (isExcel && !window.XLSX) {
-      this.setHasr({ error: 'تعذّر فتح ملف Excel في هذا المتصفح. احفظه من Excel بصيغة CSV UTF-8 ثم ارفعه.' });
-      return;
-    }
-    const r = new FileReader();
-    r.onload = () => {
-      let grid;
-      if (isExcel) {
-        try {
-          const wb = window.XLSX.read(new Uint8Array(r.result), { type: 'array' });
-          const sh = wb.Sheets[wb.SheetNames[0]];
-          grid = window.XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false })
-            .map(row => row.map(c => String(c == null ? '' : c)))
-            .filter(row => row.some(c => c.trim()));
-        } catch (err) {
-          this.setHasr({ error: 'تعذّرت قراءة ملف Excel. تأكد أنه غير محمي بكلمة مرور.' });
-          return;
-        }
-      } else {
-        grid = this.parseCsv(String(r.result || ''));
-      }
+    this.readSheetFile(file).then(grid => {
       if (grid.length < 2) { this.setHasr({ error: 'لم يُعثر على بيانات طلاب في الملف.' }); return; }
       const head = grid[0].map(h => h.trim());
       const idx = {};
@@ -12243,9 +12445,7 @@ class Component extends DCLogic {
         .filter(s => s.name !== '(بلا اسم)' || s.p || s.sec);
       if (!rows.length) { this.setHasr({ error: 'لم يُعثر على بيانات طلاب في الملف.' }); return; }
       this.setHasr({ rows: rows, fileName: file.name, error: '', tab: 'overview', query: '' });
-    };
-    r.onerror = () => this.setHasr({ error: 'تعذّرت قراءة الملف.' });
-    if (isExcel) r.readAsArrayBuffer(file); else r.readAsText(file, 'utf-8');
+    }, err => this.setHasr({ error: err.message }));
   }
 
   hasrFlags(s) {
@@ -12340,7 +12540,7 @@ class Component extends DCLogic {
         kpi('حالات صحية', String(healthN), '#218caa'),
         kpi('حالات للمتابعة', String(cases.length), '#c1b489', '#15445a')
       ],
-      hasrTabs: [tab('overview', 'نظرة عامة'), tab('charts', 'التوزيعات'), tab('cases', 'حالات المتابعة (' + cases.length + ')'), tab('register', 'سجل الطلاب')],
+      hasrTabs: [tab('overview', 'نظرة عامة'), tab('charts', 'التوزيعات'), tab('cases', 'حالات المتابعة (' + cases.length + ')'), tab('register', 'قائمة الحصر')],
       hasrIsOverview: h.tab === 'overview', hasrIsCharts: h.tab === 'charts',
       hasrIsCases: h.tab === 'cases', hasrIsRegister: h.tab === 'register',
       hasrSummary: [
