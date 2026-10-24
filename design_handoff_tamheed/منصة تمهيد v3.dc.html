@@ -4644,8 +4644,49 @@ class Component extends DCLogic {
       ],
       notes: []
     };
+
+    // الجهة المسؤولة عن كل خطوة، من نص الدليل نفسه أو من المادتين 28 و35 وصفحات الأدوار
+    const ROLE8 = 'دور الموجّه الطلابي، البند 8 (ص13): متابعة متكرري الغياب بالتنسيق مع وكيل شؤون الطلبة';
+    const actorOf = (t, p) => {
+      const lead = p.lead || '';
+      if (/^تتولّى إدارة التعليم|مدير التعليم/.test(t)) return ['edu', 'نص الخطوة'];
+      if (/^(ترفع إدارة المدرسة|رفع محضر|تُدوّن إدارة المدرسة|تدوين محضر رسمي من إدارة المدرسة)|من قبل إدارة المدرسة/.test(t)) return ['admin', 'نص الخطوة'];
+      if (/^حسم/.test(t)) return ['admin', 'المادة 28، البند 4 (ص44): عدم إشراك الموجّه في رصد درجات السلوك؛ والمادة 5: تحسم إدارة المدرسة'];
+      if (/^(جميع ما ذكر|تنفيذ جميع)/.test(t)) return ['ref', 'إحالة إلى الإجراء السابق'];
+      if (/^(التنبيه الشفهي|تدوين المشكلة السلوكية من المعلم|ملاحظة الطالب وحصر)/.test(t)) return ['teacher', 'دور المعلم، البند 9 (ص11): القيام بالإجراءات الثلاثة الأولى من مشكلات الدرجة الأولى'];
+      if (/(ال|ل)موجه الطلابي/.test(t) && !/لجنة التوجيه/.test(t)) return ['counselor', 'نص الخطوة'];
+      if (/لجنة التوجيه/.test(t)) return ['committee', 'نص الخطوة'];
+      if (/^تمكين الطالب من فرص التعويض/.test(t)) return ['committee', 'دور لجنة التوجيه، البند 10 (ص12): توفير فرص تحسين درجات السلوك'];
+      if (p.group === 'absUn' || p.group === 'absEx') {
+        if (/^التواصل مع ولي الأمر في نفس اليوم/.test(t)) return ['admin', 'المادة 35، البند 2 (ص52): إخطار ولي الأمر يوميًا من قبل إدارة المدرسة'];
+        if (/^(تنبيه ولي الأمر|مخاطبة الجهات|متابعة الإجراءات والتنسيق من قبل المدرسة|تتخذ المدرسة الإجراءات)|تخاطب المدرسة الجهات/.test(t)) return ['admin', 'نص الخطوة (مخاطبات المدرسة الرسمية)؛ والمادة 35، البند 4: عدم إشراك الموجّه في إجراءات الحرمان'];
+        if (/^استمرار تقديم الخدمات التربوية/.test(t)) return ['counselor', ROLE8];
+        return ['school', ROLE8];
+      }
+      if (/لجنة التوجيه/.test(lead)) return ['committee', 'العبارة السابقة للخطوات: «إحالة الطالب … إلى لجنة التوجيه الطلابي … لاتخاذ ما يلي»'];
+      if (/إدارة المدرسة/.test(lead)) return ['admin', 'العبارة السابقة للخطوات: «تحويل الطالب إلى إدارة المدرسة لاتخاذ ما يلي»؛ والمادة 28، البند 5 (ص44)'];
+      if ((p.group === 'behavior' || p.group === 'tardy') && p.degree === '1' && p.rep <= 3) return ['teacher', 'دور المعلم، البند 9 (ص11): القيام بالإجراءات الثلاثة الأولى من مشكلات الدرجة الأولى'];
+      if (p.group === 'behavior' || p.group === 'tardy') return ['admin', 'المادة 28، البند 5 (ص44): عدم إشراك الموجّه في تنفيذ الإجراءات على الطالب المخالف، والاكتفاء بدراسة الحالة وعلاجها'];
+      return ['school', p.group === 'abuse' ? 'المادة 29 (ص46): إجراءات تتخذها المدرسة' : 'المادة 30 (ص47): إجراءات تتخذها المدرسة'];
+    };
+    Object.keys(P).forEach(id => {
+      P[id].steps = P[id].steps.map(st => { const a = actorOf(st.text, P[id]); return Object.assign({}, st, { actor: a[0], basis: a[1] }); });
+    });
     return P;
   })();
+
+  // الموجّه يتابع خطواته وخطوات اللجنة (وهو عضو فيها) وما نُسب إلى المدرسة عمومًا؛ والباقي للاطلاع
+  ACTORS = {
+    counselor: { label: 'الموجّه الطلابي', mine: true, color: '#05623c' },
+    committee: { label: 'لجنة التوجيه الطلابي', mine: true, color: '#0a7f7d' },
+    school: { label: 'المدرسة', mine: true, color: '#15445a' },
+    admin: { label: 'إدارة المدرسة (وكيل شؤون الطلبة) — للاطلاع', short: 'إدارة المدرسة', mine: false, color: '#7a868b' },
+    teacher: { label: 'المعلم — للاطلاع', short: 'المعلم', mine: false, color: '#7a868b' },
+    edu: { label: 'إدارة التعليم — للاطلاع', short: 'إدارة التعليم', mine: false, color: '#7a868b' },
+    ref: { label: 'إعادة لما سبق — للاطلاع', short: '—', mine: false, color: '#7a868b' }
+  };
+
+  helperMine(step) { return !!(this.ACTORS[step.actor] || {}).mine; }
 
   casesState() {
     if (this._cases) return this._cases;
@@ -4704,8 +4745,16 @@ class Component extends DCLogic {
 
   helperNextIndex(c) {
     const p = this.PROCEDURES[c.procId];
-    for (let i = 0; i < p.steps.length; i++) if (!(c.steps[i] && c.steps[i].done)) return i;
+    for (let i = 0; i < p.steps.length; i++) if (this.helperMine(p.steps[i]) && !(c.steps[i] && c.steps[i].done)) return i;
     return -1;
+  }
+
+  // تقدّم مهام الموجّه وحدها (خطوات الإدارة والمعلم للاطلاع)
+  helperProgress(c) {
+    const p = this.PROCEDURES[c.procId];
+    let done = 0, total = 0;
+    p.steps.forEach((st, i) => { if (this.helperMine(st)) { total++; if (c.steps[i] && c.steps[i].done) done++; } });
+    return { done, total };
   }
 
   helperLastTouch(c) {
@@ -4937,21 +4986,35 @@ class Component extends DCLogic {
       body = R('div', { style: { display: 'flex', flexDirection: 'column', gap: 16 } }, parts);
     } else if (cur) {
       const c = cur, p = this.PROCEDURES[c.procId];
-      const doneN = p.steps.filter((_, i) => c.steps[i] && c.steps[i].done).length;
+      const prog = this.helperProgress(c), doneN = prog.done;
       const nextI = this.helperNextIndex(c);
       const st = c.student || {};
       const stepEls = p.steps.map((step, i) => {
         const ss = c.steps[i] || {};
         const isNext = i === nextI && !c.closedAt;
+        const mine = this.helperMine(step), A = this.ACTORS[step.actor] || this.ACTORS.school;
+        const badge = R('span', { 'data-helper-actor': step.actor, style: { alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, color: mine ? '#fff' : '#5c686d', background: mine ? A.color : '#eceff0',
+          borderRadius: 99, padding: '2px 10px' } }, A.label);
+        if (!mine) return R('div', { key: i, 'data-helper-step': i, 'data-helper-info': '1', style: {
+          border: '1px dashed #d5dadc', background: '#f7f8f8', borderRadius: 14, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 } },
+          R('div', { style: { display: 'flex', gap: 10, alignItems: 'flex-start' } },
+            R('span', { style: { flex: '0 0 auto', width: 30, textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#9aa6ab', paddingTop: 2 } }, String(i + 1)),
+            R('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 } },
+              badge,
+              R('span', { style: { fontSize: 13, lineHeight: 1.85, color: '#5c686d' } }, step.text),
+              step.actor === 'ref' ? null : R('label', { style: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: ss.done ? '#05623c' : '#7a868b', fontWeight: 700, cursor: 'pointer' } },
+                R('input', { type: 'checkbox', checked: !!ss.done, onChange: () => this.helperToggleStep(c, i), 'aria-label': 'نُفّذت الخطوة ' + (i + 1) + ' من الجهة المسؤولة' }),
+                ss.done ? 'نُفّذ من ' + (A.short || A.label) + ' — ' + fmt(ss.date) : 'نُفّذ من ' + (A.short || A.label) + '؟ (اختياري)'))));
         return R('div', { key: i, 'data-helper-step': i, style: {
           border: '1px solid ' + (isNext ? '#0da9a6' : '#e0e6e9'), background: ss.done ? '#f2f8f4' : isNext ? '#f0fafa' : '#fff',
           borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 } },
           R('div', { style: { display: 'flex', gap: 10, alignItems: 'flex-start' } },
             R('button', { type: 'button', 'aria-pressed': ss.done ? 'true' : 'false', 'aria-label': 'تم تنفيذ الخطوة ' + (i + 1), onClick: () => this.helperToggleStep(c, i), style: {
               flex: '0 0 auto', width: 30, height: 30, borderRadius: 99, border: '2px solid ' + (ss.done ? '#05623c' : '#9aa6ab'), background: ss.done ? '#05623c' : '#fff',
-              color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: 'inherit', padding: 0 } }, ss.done ? '✓' : String(i + 1)),
+              color: ss.done ? '#fff' : '#5c686d', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', padding: 0 } }, ss.done ? '✓' : String(i + 1)),
             R('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 } },
-              isNext ? R('span', { style: { fontSize: 11.5, fontWeight: 700, color: '#0a7f7d' } }, 'الخطوة التالية') : null,
+              R('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } }, badge,
+                isNext ? R('span', { style: { fontSize: 11.5, fontWeight: 700, color: '#0a7f7d' } }, 'مهمتك التالية') : null),
               R('span', { style: { fontSize: 13.5, lineHeight: 1.85, color: '#22333a' } }, step.text),
               ss.done ? R('span', { style: { fontSize: 12, color: '#05623c', fontWeight: 700 } }, 'نُفّذت في ' + fmt(ss.date)) : null)),
           (step.forms.length || step.msg) ? R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', paddingInlineStart: 40 } },
@@ -4962,7 +5025,7 @@ class Component extends DCLogic {
           c.temp ? null : R('input', { value: ss.note || '', placeholder: 'ملاحظة (اختيارية)', onChange: e => this.helperStepNote(c, i, e.target.value),
             style: Object.assign({}, input, { padding: '7px 10px', fontSize: 12.5, marginInlineStart: 40, width: 'calc(100% - 40px)' }) }));
       });
-      const allDone = doneN === p.steps.length;
+      const allDone = doneN === prog.total;
       body = R('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
         R('div', { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
           c.temp ? R('span', { style: { fontSize: 12, fontWeight: 700, color: '#8a2325' } }, 'حالة حساسة — لا تُحفظ على الجهاز')
@@ -4973,17 +5036,26 @@ class Component extends DCLogic {
           c.closedAt ? R('span', { style: { fontSize: 12, fontWeight: 700, color: '#8a2325' } }, 'أُغلقت الحالة في ' + fmt(c.closedAt)) : null),
         R('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
           R('div', { style: { flex: 1, height: 8, borderRadius: 99, background: '#e3eaec', overflow: 'hidden' } },
-            R('div', { style: { width: Math.round(doneN / p.steps.length * 100) + '%', height: '100%', background: '#05623c' } })),
-          R('span', { 'data-helper-progress': '1', style: { fontSize: 12.5, fontWeight: 700, color: '#05623c' } }, doneN + ' من ' + p.steps.length)),
-        p.lead ? R('div', { style: { fontSize: 13, fontWeight: 700, color: ink, lineHeight: 1.85 } }, p.lead) : null,
-        stepEls,
+            R('div', { style: { width: (prog.total ? Math.round(doneN / prog.total * 100) : 100) + '%', height: '100%', background: '#05623c' } })),
+          R('span', { 'data-helper-progress': '1', style: { fontSize: 12.5, fontWeight: 700, color: '#05623c' } }, prog.total ? 'مهامك: ' + doneN + ' من ' + prog.total : 'لا مهام لك')),
+        R('div', { style: { fontSize: 12.5, lineHeight: 1.85, color: '#3d4a50', background: '#f3f8f9', borderRadius: 12, padding: '8px 12px' } },
+          prog.total ? 'وفق المادة 28 من الدليل لا يُشرك الموجّه الطلابي في تنفيذ الإجراءات على الطالب ولا في حسم الدرجات. مهامك ملوّنة، وخطوات الإدارة والمعلم بالرمادي للاطلاع.'
+            : 'هذا الإجراء من مسؤولية ' + (p.steps.every(x => x.actor === 'teacher') ? 'المعلم' : 'إدارة المدرسة') + '، ولا مهام لك فيه. دورك يبدأ عند تحويل الطالب إليك.'),
+        p.lead && !/إدارة المدرسة لاتخاذ/.test(p.lead) ? R('div', { style: { fontSize: 13, fontWeight: 700, color: ink, lineHeight: 1.85 } }, p.lead) : null,
+        prog.total ? R('b', { style: { fontSize: 14, color: '#05623c' } }, 'مهامك في هذا الإجراء') : null,
+        stepEls.filter((_, i) => this.helperMine(p.steps[i])),
+        prog.total < p.steps.length ? R('button', { type: 'button', 'data-helper-info-toggle': '1', onClick: () => this.setHelper({ showInfo: !h.showInfo }),
+          style: Object.assign(btn('#f7f8f8', '#5c686d', '#d5dadc'), { alignSelf: 'stretch', justifyContent: 'center' }) },
+          (h.showInfo || !prog.total ? '▾ ' : '◂ ') + 'خطوات الجهات الأخرى للاطلاع (' + (p.steps.length - prog.total) + ') — الإدارة والمعلم') : null,
+        (h.showInfo || !prog.total) && /إدارة المدرسة لاتخاذ/.test(p.lead || '') ? R('div', { style: { fontSize: 12.5, fontWeight: 700, color: '#5c686d' } }, p.lead) : null,
+        h.showInfo || !prog.total ? stepEls.filter((_, i) => !this.helperMine(p.steps[i])) : null,
         p.notes.length ? R('div', { style: { background: '#f6f7f8', borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 } },
           R('b', { style: { fontSize: 13, color: ink } }, 'من أحكام الدليل'),
           p.notes.map((n, i) => R('span', { key: i, style: { fontSize: 12.5, lineHeight: 1.85, color: '#3d4a50' } }, '• ' + n))) : null,
         (c.history || []).length ? R('div', { style: { fontSize: 12.5, color: '#5c686d', lineHeight: 1.9 } },
           R('b', null, 'مراحل سابقة: '), c.history.map(x => (this.PROCEDURES[x.procId] || {}).title + ' (حتى ' + fmt(x.until) + ')').join('، ')) : null,
-        allDone && p.next && !c.closedAt ? R('div', { style: { background: '#f0fafa', border: '1px solid #9fd8d6', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: '#0a5f5d', fontWeight: 700 } },
-          'اكتملت الخطوات. إذا تكررت المشكلة أو زادت أيام الغياب فانتقل إلى: ' + this.PROCEDURES[p.next].title) : null,
+        allDone && prog.total && p.next && !c.closedAt ? R('div', { style: { background: '#f0fafa', border: '1px solid #9fd8d6', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: '#0a5f5d', fontWeight: 700 } },
+          'اكتملت مهامك في هذا الإجراء. إذا تكررت المشكلة أو زادت أيام الغياب فانتقل إلى: ' + this.PROCEDURES[p.next].title) : null,
         R('div', { style: { borderTop: '1px solid #e8eaeb', paddingTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' } },
           R('button', { type: 'button', style: btn('#05623c', '#fff'), onClick: this.exportPdf }, 'تنزيل سجل الإجراءات PDF'),
           p.next && !c.closedAt ? R('button', { type: 'button', style: btn('#fff', ink, ink), onClick: () => this.helperEscalate(c) },
@@ -4999,17 +5071,17 @@ class Component extends DCLogic {
       const match = c => !q || String(c.student.name || '').indexOf(q) > -1;
       const card = c => {
         const p = this.PROCEDURES[c.procId], ni = this.helperNextIndex(c);
-        const doneN = p.steps.filter((_, i) => c.steps[i] && c.steps[i].done).length;
+        const pg = this.helperProgress(c), doneN = pg.done;
         const last = this.helperLastTouch(c);
-        const stale = !c.closedAt && Date.now() - new Date(last).getTime() >= 3 * 86400000;
+        const stale = !c.closedAt && ni > -1 && Date.now() - new Date(last).getTime() >= 3 * 86400000;
         return R('button', { key: c.id, type: 'button', 'data-helper-case': c.id, onClick: () => this.setHelper({ view: 'case', caseId: c.id, temp: null }), style: {
           textAlign: 'start', background: '#fff', border: '1px solid ' + (stale ? '#ecd9a3' : '#e0e6e9'), borderRadius: 14, padding: '12px 14px',
           display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer', fontFamily: 'inherit', width: '100%' } },
           R('div', { style: { display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' } },
             R('b', { style: { fontSize: 14.5, color: ink } }, c.student.name + (c.student.grade ? ' — ' + c.student.grade : '')),
-            R('span', { style: { fontSize: 12, fontWeight: 700, color: '#05623c' } }, doneN + ' من ' + p.steps.length)),
+            R('span', { style: { fontSize: 12, fontWeight: 700, color: '#05623c' } }, pg.total ? 'مهامك ' + doneN + ' من ' + pg.total : 'لا مهام لك')),
           R('span', { style: { fontSize: 12.5, color: '#22333a', fontWeight: 700 } }, p.title),
-          ni > -1 && !c.closedAt ? R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, 'التالي: ' + (p.steps[ni].text.length > 110 ? p.steps[ni].text.slice(0, 110) + '…' : p.steps[ni].text)) : null,
+          ni > -1 && !c.closedAt ? R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, 'مهمتك التالية: ' + (p.steps[ni].text.length > 110 ? p.steps[ni].text.slice(0, 110) + '…' : p.steps[ni].text)) : null,
           R('span', { style: { fontSize: 11.5, color: stale ? '#8a5a00' : '#7a868b', fontWeight: stale ? 700 : 400 } },
             c.closedAt ? 'مغلقة ' + this.helperDaysAgo(c.closedAt) : 'آخر إجراء ' + this.helperDaysAgo(last) + (stale ? ' — تحتاج متابعة' : '')));
       };
@@ -5046,12 +5118,13 @@ class Component extends DCLogic {
         p.lead ? R('div', { style: { fontWeight: 700, color: ink, fontSize: fs, lineHeight: 1.7 } }, p.lead) : null,
         R('table', { style: { borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' } },
           R('thead', null, R('tr', null, R('th', { style: Object.assign({}, th, { width: 28 }) }, 'م'), R('th', { style: th }, 'الإجراء'),
-            R('th', { style: Object.assign({}, th, { width: 92 }) }, 'تاريخ التنفيذ'), R('th', { style: Object.assign({}, th, { width: 130 }) }, 'ملاحظات'))),
+            R('th', { style: Object.assign({}, th, { width: 84 }) }, 'الجهة'), R('th', { style: Object.assign({}, th, { width: 92 }) }, 'تاريخ التنفيذ'), R('th', { style: Object.assign({}, th, { width: 110 }) }, 'ملاحظات'))),
           R('tbody', null, p.steps.map((x, i) => {
             const ss = (sc.steps || {})[i] || {};
             return R('tr', { key: i },
               R('td', { style: Object.assign({}, cell, { textAlign: 'center', fontWeight: 700, color: ink }) }, i + 1),
               R('td', { style: cell }, x.text),
+              R('td', { style: Object.assign({}, cell, { textAlign: 'center', fontSize: fs - 1 }) }, (this.ACTORS[x.actor] || {}).short || (this.ACTORS[x.actor] || {}).label || ''),
               R('td', { style: Object.assign({}, cell, { textAlign: 'center' }) }, ss.done ? fmt(ss.date) : ''),
               R('td', { style: cell }, p.sensitive ? '' : (ss.note || '')));
           }))),
@@ -5089,7 +5162,7 @@ class Component extends DCLogic {
         return R('button', { key: c.id, type: 'button', onClick: () => go({ view: 'case', caseId: c.id }), style: {
           textAlign: 'start', background: '#f6f9fa', border: '1px solid #e0e6e9', borderRadius: 14, padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', gap: 3 } },
           R('b', { style: { fontSize: 13.5, color: ink } }, c.student.name + ' — ' + p.title),
-          R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, ni > -1 ? 'التالي: ' + (p.steps[ni].text.length > 90 ? p.steps[ni].text.slice(0, 90) + '…' : p.steps[ni].text) : 'اكتملت الخطوات — راجع الانتقال للمستوى التالي أو أغلق الحالة.'),
+          R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, ni > -1 ? 'مهمتك التالية: ' + (p.steps[ni].text.length > 90 ? p.steps[ni].text.slice(0, 90) + '…' : p.steps[ni].text) : this.helperProgress(c).total ? 'اكتملت مهامك — راجع الانتقال للمستوى التالي أو أغلق الحالة.' : 'لا مهام لك في هذا الإجراء — للاطلاع.'),
           R('span', { style: { fontSize: 11.5, color: '#7a868b' } }, 'آخر إجراء ' + this.helperDaysAgo(this.helperLastTouch(c))));
       }));
   }
@@ -7601,7 +7674,7 @@ class Component extends DCLogic {
     const navDefs = [['home', 'الرئيسية'], ['helper', 'المرشد المساعد'], ['session', 'تحضير جلسة'], ['minutes', 'محضر اجتماع اللجنة'], ['letter', 'رسالة لولي أمر'], ['program', 'برنامج توعوي'], ['exam', 'جداول الاختبارات'], ['plan', 'الخطة الفصلية'], ['followup', 'متابعة الخطة'], ['survey', 'بوصلة التخصص'], ['absence', 'إجراءات الغياب'], ['hasr', 'حصر معلومات الطلاب'], ['contact', 'التواصل مع ولي الأمر'], ['rules', 'نماذج قواعد السلوك'], ['weekly', 'المتابعة الأسبوعية'], ['referral', 'إحالة طالب'], ['casestudy', 'دراسة حالة'], ['bank', 'بنك الأفكار']];
     const titles = {
       home: ['مساعد الموجّه الطلابي', 'منصة تمهيد'],
-      helper: ['إجراءات دليل قواعد السلوك والمواظبة خطوةً بخطوة، مع سجل لكل طالب', 'المرشد المساعد'],
+      helper: ['إجراءات الدليل مع بيان الجهة المسؤولة — مهامك أولًا', 'المرشد المساعد'],
       session: ['قبل الدخول للجلسة', 'تحضير جلسة إرشادية'],
       minutes: ['النموذج المعتمد أو النسخة الموسّعة', 'محضر اجتماع لجنة التوجيه الطلابي'],
       letter: ['مراسلات الأسرة', 'رسالة لولي أمر'],
