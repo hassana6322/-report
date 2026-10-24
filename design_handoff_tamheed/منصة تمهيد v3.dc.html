@@ -1334,7 +1334,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
           </div>
 
           <div ref="{{ panelRef }}" data-print-panel="1" style="display:flex;flex-direction:column;align-items:center;gap:10px;background:#eef2f4;box-shadow:inset 0 0 0 1px #e0e6e9;border-radius:20px;padding:16px;overflow:hidden">
-            <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة سجل الإجراءات بمقاس A4</div>
+            <div style="font-size:12px;color:#5c686d;font-weight:700">معاينة بمقاس A4</div>
             <div data-print-box="1" style="{{ boxStyle }}">
               <div data-print-scale="1" style="{{ scaleStyle }}">
                 <div ref="{{ pageRef }}" data-print-page="1" data-single-page="1" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;padding:24px 40px 40px;display:flex;flex-direction:column;gap:9px;color:#22333a;box-shadow:0 20px 50px rgba(0,56,69,.14)">
@@ -4020,7 +4020,8 @@ class Component extends DCLogic {
       surveys: s.surveyRecords,
       rules: this.rulesState(),
       cases: this.casesState(),
-      students: this.studentsState()
+      students: this.studentsState(),
+      recs: this.recsState()
     };
     try {
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -4061,6 +4062,7 @@ class Component extends DCLogic {
         if (d.caseStudy && typeof d.caseStudy === 'object') this.setCase(d.caseStudy);
         if (d.weekly && typeof d.weekly === 'object') this.setWeekly(d.weekly);
         if (d.rules && typeof d.rules === 'object') this.setRules(Object.assign({ pick: {}, data: {} }, d.rules));
+        if (Array.isArray(d.recs)) this.setRecs(d.recs.filter(x => x && x.id && x.text));
         if (Array.isArray(d.students)) this.setStudents(d.students.filter(x => x && x.name));
         if (Array.isArray(d.cases)) this.setCases(d.cases.filter(c => c && c.id && this.PROCEDURES[c.procId]));
         if (Array.isArray(d.surveys)) {
@@ -4416,7 +4418,7 @@ class Component extends DCLogic {
     };
   })();
 
-  // ===== «المرشد المساعد»: إجراءات دليل قواعد السلوك والمواظبة (الإصدار الخامس 1447هـ) خطوةً بخطوة =====
+  // ===== «سَنَد» (المرشد المساعد): إجراءات دليل قواعد السلوك والمواظبة (الإصدار الخامس 1447هـ) خطوةً بخطوة =====
   // نص كل خطوة منقول حرفيًا من الدليل، ومعه رقم المادة والصفحة. لا تُضاف هنا خطوة ليست في الدليل.
   CASES_KEY = 'tamheed.cases.v1';
 
@@ -4909,13 +4911,19 @@ class Component extends DCLogic {
     const cur = this.helperCurrent();
 
     const tabs = R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
-      R('button', { type: 'button', style: chip(h.view !== 'new' && h.view !== 'roster'), onClick: () => this.setHelper({ view: 'list', temp: null, msg: '' }) }, 'الحالات المفتوحة (' + open.length + ')'),
+      R('button', { type: 'button', style: chip(h.view === 'list' || h.view === 'case'), onClick: () => this.setHelper({ view: 'list', temp: null, msg: '' }) }, 'الحالات المفتوحة (' + open.length + ')'),
       R('button', { type: 'button', style: chip(h.view === 'new'), onClick: () => this.setHelper({ view: 'new', temp: null, msg: '' }) }, '+ ابدأ إجراءً جديدًا'),
-      R('button', { type: 'button', style: chip(h.view === 'roster'), onClick: () => this.setHelper({ view: 'roster', temp: null, msg: '' }) }, 'سجل الطلاب (' + this.studentsState().length + ')'));
+      R('button', { type: 'button', style: chip(h.view === 'roster'), onClick: () => this.setHelper({ view: 'roster', temp: null, msg: '' }) }, 'سجل الطلاب (' + this.studentsState().length + ')'),
+      R('button', { type: 'button', style: chip(h.view === 'recs'), onClick: () => this.setHelper({ view: 'recs', temp: null, msg: '' }) }, 'توصيات اللجنة (' + this.recsState().filter(r => !r.doneAt).length + ')'),
+      R('button', { type: 'button', style: chip(h.view === 'report'), onClick: () => this.setHelper({ view: 'report', temp: null, msg: '' }) }, 'التقرير الفصلي'));
 
     let body;
     if (h.view === 'roster') {
       body = this.rosterView();
+    } else if (h.view === 'recs') {
+      body = this.recsView();
+    } else if (h.view === 'report') {
+      body = this.reportView();
     } else if (h.view === 'new') {
       const d = h.draft;
       const setD = patch => this.setHelper({ draft: Object.assign({}, d, patch), msg: '' });
@@ -5042,6 +5050,7 @@ class Component extends DCLogic {
           prog.total ? 'وفق المادة 28 من الدليل لا يُشرك الموجّه الطلابي في تنفيذ الإجراءات على الطالب ولا في حسم الدرجات. مهامك ملوّنة، وخطوات الإدارة والمعلم بالرمادي للاطلاع.'
             : 'هذا الإجراء من مسؤولية ' + (p.steps.every(x => x.actor === 'teacher') ? 'المعلم' : 'إدارة المدرسة') + '، ولا مهام لك فيه. دورك يبدأ عند تحويل الطالب إليك.'),
         p.lead && !/إدارة المدرسة لاتخاذ/.test(p.lead) ? R('div', { style: { fontSize: 13, fontWeight: 700, color: ink, lineHeight: 1.85 } }, p.lead) : null,
+        c.temp || c.closedAt ? null : this.helperFollowBox(c),
         prog.total ? R('b', { style: { fontSize: 14, color: '#05623c' } }, 'مهامك في هذا الإجراء') : null,
         stepEls.filter((_, i) => this.helperMine(p.steps[i])),
         prog.total < p.steps.length ? R('button', { type: 'button', 'data-helper-info-toggle': '1', onClick: () => this.setHelper({ showInfo: !h.showInfo }),
@@ -5049,6 +5058,8 @@ class Component extends DCLogic {
           (h.showInfo || !prog.total ? '▾ ' : '◂ ') + 'خطوات الجهات الأخرى للاطلاع (' + (p.steps.length - prog.total) + ') — الإدارة والمعلم') : null,
         (h.showInfo || !prog.total) && /إدارة المدرسة لاتخاذ/.test(p.lead || '') ? R('div', { style: { fontSize: 12.5, fontWeight: 700, color: '#5c686d' } }, p.lead) : null,
         h.showInfo || !prog.total ? stepEls.filter((_, i) => !this.helperMine(p.steps[i])) : null,
+        c.temp ? null : this.helperCompBox(c),
+        c.temp ? null : this.helperCaseRecs(c),
         p.notes.length ? R('div', { style: { background: '#f6f7f8', borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 } },
           R('b', { style: { fontSize: 13, color: ink } }, 'من أحكام الدليل'),
           p.notes.map((n, i) => R('span', { key: i, style: { fontSize: 12.5, lineHeight: 1.85, color: '#3d4a50' } }, '• ' + n))) : null,
@@ -5082,6 +5093,8 @@ class Component extends DCLogic {
             R('span', { style: { fontSize: 12, fontWeight: 700, color: '#05623c' } }, pg.total ? 'مهامك ' + doneN + ' من ' + pg.total : 'لا مهام لك')),
           R('span', { style: { fontSize: 12.5, color: '#22333a', fontWeight: 700 } }, p.title),
           ni > -1 && !c.closedAt ? R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, 'مهمتك التالية: ' + (p.steps[ni].text.length > 110 ? p.steps[ni].text.slice(0, 110) + '…' : p.steps[ni].text)) : null,
+          c.nextDate && !c.closedAt ? R('span', { style: { fontSize: 12, fontWeight: 700, color: c.nextDate < this.todayStr() ? '#8a2325' : c.nextDate === this.todayStr() ? '#0a5f5d' : '#5c686d' } },
+            'موعد المتابعة: ' + this.dayHijri(c.nextDate) + (c.nextDate < this.todayStr() ? ' — متأخر' : c.nextDate === this.todayStr() ? ' — اليوم' : '')) : null,
           R('span', { style: { fontSize: 11.5, color: stale ? '#8a5a00' : '#7a868b', fontWeight: stale ? 700 : 400 } },
             c.closedAt ? 'مغلقة ' + this.helperDaysAgo(c.closedAt) : 'آخر إجراء ' + this.helperDaysAgo(last) + (stale ? ' — تحتاج متابعة' : '')));
       };
@@ -5097,6 +5110,11 @@ class Component extends DCLogic {
     }
 
     // ورقة A4: سجل الإجراءات للحالة المفتوحة، أو نموذج فارغ للإجراء المختار
+    if (h.view === 'report') {
+      const o = this.reportOpts();
+      return { helperLeft: R('div', { style: { display: 'flex', flexDirection: 'column', gap: 16 } }, tabs, body),
+        helperTitle: 'التقرير الإحصائي للمشكلات السلوكية والغياب — ' + o.term + ' ' + o.hy + 'هـ', helperSheet: this.reportSheet(), helperHasSheet: true };
+    }
     const sc = cur || (() => { const pid = this.helperDraftProc(h.draft); return pid ? { student: {}, procId: pid, steps: {}, problem: '', openedAt: '' } : null; })();
     let sheet = null, title = 'سجل إجراءات حالة';
     if (sc) {
@@ -5144,27 +5162,281 @@ class Component extends DCLogic {
 
   // بطاقة الرئيسية: ما ينتظرك اليوم من خطوات
   helperHomeCard() {
-    const R = React.createElement, ink = '#15445a';
+    const R = React.createElement, ink = '#15445a', today = this.todayStr();
     const open = this.casesState().filter(c => !c.closedAt);
     const go = patch => { this.setState({ section: 'helper', menuOpen: false }); this.setHelper(Object.assign({ temp: null, msg: '' }, patch)); window.scrollTo(0, 0); };
-    const items = open.slice().sort((a, b) => (this.helperLastTouch(a) < this.helperLastTouch(b) ? -1 : 1)).slice(0, 5);
+    const dueFollow = open.filter(c => c.nextDate && c.nextDate <= today).sort((a, b) => (a.nextDate < b.nextDate ? -1 : 1)).slice(0, 5);
+    const dueRecs = this.recsState().filter(r => !r.doneAt && r.due && r.due <= today).sort((a, b) => (a.due < b.due ? -1 : 1)).slice(0, 5);
+    const compPending = open.filter(c => this.helperHasDeduction(c) && !(c.comp && c.comp.aware)).slice(0, 5);
+    const steps = open.filter(c => this.helperNextIndex(c) > -1).sort((a, b) => (this.helperLastTouch(a) < this.helperLastTouch(b) ? -1 : 1)).slice(0, 5);
+    const item = (key, onClick, title, line, sub, tone) => R('button', { key, type: 'button', onClick, style: {
+      textAlign: 'start', background: tone === 'late' ? '#fdf5f5' : tone === 'today' ? '#f0fafa' : '#f6f9fa', border: '1px solid ' + (tone === 'late' ? '#ecc5c5' : tone === 'today' ? '#9fd8d6' : '#e0e6e9'),
+      borderRadius: 14, padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', gap: 3 } },
+      R('b', { style: { fontSize: 13.5, color: ink } }, title),
+      line ? R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, line) : null,
+      sub ? R('span', { style: { fontSize: 11.5, color: tone === 'late' ? '#8a2325' : '#7a868b', fontWeight: tone === 'late' ? 700 : 400 } }, sub) : null);
+    const group = (label, kids) => kids.length ? R('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, R('span', { style: { fontSize: 12.5, fontWeight: 700, color: '#5c686d' } }, label), kids) : null;
+    const nothingDue = !dueFollow.length && !dueRecs.length && !compPending.length;
     return R('div', { 'data-helper-home': '1', style: { background: '#fff', border: '1px solid #cfe0e6', borderRadius: 22, padding: 20, display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 6px 20px rgba(0,56,69,.10)' } },
       R('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
         R('div', { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
-          R('span', { style: { fontSize: 18, fontWeight: 700, color: ink } }, 'مهام المرشد المساعد'),
-          R('span', { style: { fontSize: 13, color: '#5c686d', lineHeight: 1.8 } }, open.length ? 'لديك ' + (open.length === 1 ? 'حالة مفتوحة واحدة' : open.length === 2 ? 'حالتان مفتوحتان' : open.length + (open.length <= 10 ? ' حالات مفتوحة' : ' حالة مفتوحة')) + '. هذه خطواتها التالية:' : 'عند غياب طالب أو مخالفة سلوكية، ابدأ إجراءً وسأعرض لك خطوات الدليل بالترتيب، مع النماذج جاهزة.')),
+          R('span', { style: { fontSize: 18, fontWeight: 700, color: ink } }, 'مهام سَنَد'),
+          R('span', { style: { fontSize: 13, color: '#5c686d', lineHeight: 1.8 } }, open.length ? 'لديك ' + (open.length === 1 ? 'حالة مفتوحة واحدة' : open.length === 2 ? 'حالتان مفتوحتان' : open.length + (open.length <= 10 ? ' حالات مفتوحة' : ' حالة مفتوحة')) + '.' + (nothingDue ? ' لا مواعيد مستحقة اليوم.' : '') : 'عند غياب طالب أو مخالفة سلوكية، ابدأ إجراءً وسأعرض لك خطوات الدليل بالترتيب، مع النماذج جاهزة.')),
         R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
           R('button', { type: 'button', 'data-home-roster': '1', onClick: () => go({ view: 'roster' }), style: { background: '#fff', color: ink, border: '1px solid ' + ink, borderRadius: 99, minHeight: 42, padding: '0 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } },
             this.studentsState().length ? 'سجل الطلاب (' + this.studentsState().length + ')' : 'رفع ملف الطلاب'),
           R('button', { type: 'button', onClick: () => go({ view: 'new' }), style: { background: '#05623c', color: '#fff', border: 'none', borderRadius: 99, minHeight: 42, padding: '0 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } }, '+ ابدأ إجراءً'))),
-      items.map(c => {
+      group('مواعيد المتابعة — اليوم والمتأخرة', dueFollow.map(c => item('f' + c.id, () => go({ view: 'case', caseId: c.id }), c.student.name + ' — ' + this.PROCEDURES[c.procId].title,
+        c.nextNote || '', 'الموعد: ' + this.dayHijri(c.nextDate) + (c.nextDate < today ? ' — متأخر' : ' — اليوم'), c.nextDate < today ? 'late' : 'today'))),
+      group('توصيات اللجنة المستحقة', dueRecs.map(r => item('r' + r.id, () => go({ view: 'recs' }), r.text, r.owner ? 'المسؤول: ' + r.owner : '',
+        'موعد التنفيذ: ' + this.dayHijri(r.due) + (r.due < today ? ' — متأخرة' : ' — اليوم'), r.due < today ? 'late' : 'today'))),
+      group('توعية بفرص التعويض', compPending.map(c => item('c' + c.id, () => go({ view: 'case', caseId: c.id }), 'توعية ' + c.student.name + ' بحقه في فرص تعويض الدرجات المحسومة', '', 'دور الموجّه، البند 7'))),
+      group(nothingDue ? '' : 'المهام التالية في الحالات', steps.map(c => {
         const p = this.PROCEDURES[c.procId], ni = this.helperNextIndex(c);
-        return R('button', { key: c.id, type: 'button', onClick: () => go({ view: 'case', caseId: c.id }), style: {
-          textAlign: 'start', background: '#f6f9fa', border: '1px solid #e0e6e9', borderRadius: 14, padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', gap: 3 } },
-          R('b', { style: { fontSize: 13.5, color: ink } }, c.student.name + ' — ' + p.title),
-          R('span', { style: { fontSize: 12.5, color: '#3d4a50', lineHeight: 1.7 } }, ni > -1 ? 'مهمتك التالية: ' + (p.steps[ni].text.length > 90 ? p.steps[ni].text.slice(0, 90) + '…' : p.steps[ni].text) : this.helperProgress(c).total ? 'اكتملت مهامك — راجع الانتقال للمستوى التالي أو أغلق الحالة.' : 'لا مهام لك في هذا الإجراء — للاطلاع.'),
-          R('span', { style: { fontSize: 11.5, color: '#7a868b' } }, 'آخر إجراء ' + this.helperDaysAgo(this.helperLastTouch(c))));
-      }));
+        return item(c.id, () => go({ view: 'case', caseId: c.id }), c.student.name + ' — ' + p.title,
+          ni > -1 ? 'مهمتك التالية: ' + (p.steps[ni].text.length > 90 ? p.steps[ni].text.slice(0, 90) + '…' : p.steps[ni].text) : this.helperProgress(c).total ? 'اكتملت مهامك — راجع الانتقال للمستوى التالي أو أغلق الحالة.' : 'لا مهام لك في هذا الإجراء — للاطلاع.',
+          'آخر إجراء ' + this.helperDaysAgo(this.helperLastTouch(c)));
+      })));
+  }
+
+  // ===== إضافات سَنَد: مواعيد المتابعة، وفرص التعويض، وتوصيات اللجنة، والتقرير الفصلي =====
+  RECS_KEY = 'tamheed.recs.v1';
+
+  todayStr() {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  dayHijri(v) { return v ? this.hijri(new Date(v + 'T12:00:00')) : ''; }
+
+  recsState() {
+    if (this._recs) return this._recs;
+    let r = null;
+    try { r = JSON.parse(localStorage.getItem(this.RECS_KEY) || 'null'); } catch (e) {}
+    this._recs = Array.isArray(r) ? r.filter(x => x && x.id && x.text) : [];
+    return this._recs;
+  }
+
+  setRecs(next) {
+    this._recs = next;
+    this.setState({ recsTick: (this.state.recsTick || 0) + 1 });
+    this.safeSave(this.RECS_KEY, next);
+  }
+
+  // هل طُبّق على الطالب حسم في هذا الإجراء أو فيما قبله؟ (فيظهر صندوق فرص التعويض)
+  helperHasDeduction(c) {
+    return [c.procId].concat((c.history || []).map(x => x.procId)).some(pid => {
+      const p = this.PROCEDURES[pid];
+      return p && (p.group === 'behavior' || p.group === 'tardy') && p.steps.some(st => /^حسم/.test(st.text));
+    });
+  }
+
+  sanadBtn(bg, fg, bd) {
+    return { background: bg, color: fg, border: bd ? '1px solid ' + bd : 'none', borderRadius: 99, minHeight: 38, padding: '0 14px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' };
+  }
+
+  sanadInput(extra) {
+    return Object.assign({ background: '#fff', border: '1px solid #d5d5d5', borderRadius: 12, padding: '9px 11px', fontSize: 13, fontFamily: 'inherit', color: '#22333a', boxSizing: 'border-box' }, extra || {});
+  }
+
+  // موعد المتابعة القادم (أداة تنظيم)
+  helperFollowBox(c) {
+    const R = React.createElement, ink = '#15445a', today = this.todayStr();
+    const log = c.followLog || [];
+    const late = c.nextDate && c.nextDate < today, isToday = c.nextDate === today;
+    return R('div', { 'data-helper-follow': '1', style: { border: '1px solid ' + (late ? '#ecc5c5' : isToday ? '#9fd8d6' : '#e0e6e9'), background: late ? '#fdf5f5' : isToday ? '#f0fafa' : '#fff',
+      borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 } },
+      R('b', { style: { fontSize: 13.5, color: ink } }, 'موعد المتابعة القادم'),
+      R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' } },
+        R('input', { type: 'date', value: c.nextDate || '', 'aria-label': 'موعد المتابعة', onChange: e => this.helperEditCase(c, x => Object.assign(x, { nextDate: e.target.value })), style: this.sanadInput({ width: 170 }) }),
+        c.nextDate ? R('span', { style: { fontSize: 12.5, fontWeight: 700, color: late ? '#8a2325' : isToday ? '#0a5f5d' : '#5c686d' } }, this.dayHijri(c.nextDate) + (late ? ' — متأخر' : isToday ? ' — اليوم' : '')) : null,
+        c.nextDate ? R('button', { type: 'button', 'data-follow-done': '1', style: this.sanadBtn('#05623c', '#fff'), onClick: () => this.helperEditCase(c, x => Object.assign(x, {
+          followLog: (x.followLog || []).concat([{ date: new Date().toISOString(), note: x.nextNote || '' }]), nextDate: '', nextNote: '' })) }, 'تمت المتابعة') : null),
+      R('input', { value: c.nextNote || '', placeholder: 'ماذا ستتابع؟ (اختياري) — مثل: جلسة إرشادية، مراجعة الخطة مع ولي الأمر', onChange: e => this.helperEditCase(c, x => Object.assign(x, { nextNote: e.target.value })), style: this.sanadInput({ width: '100%' }) }),
+      log.length ? R('span', { style: { fontSize: 12, color: '#5c686d' } }, 'متابعات سابقة: ' + log.length + ' — آخرها ' + this.hijri(new Date(log[log.length - 1].date))) : null);
+  }
+
+  // فرص تعويض درجات السلوك — دور الموجّه، البند 7
+  helperCompBox(c) {
+    if (!this.helperHasDeduction(c)) return null;
+    const R = React.createElement, ink = '#15445a', h = this.helperUi();
+    const comp = Object.assign({ aware: '', items: [] }, c.comp || {});
+    const setComp = patch => this.helperEditCase(c, x => Object.assign(x, { comp: Object.assign({ aware: '', items: [] }, x.comp || {}, patch) }));
+    return R('div', { 'data-helper-comp': '1', style: { border: '1px solid #cfe5d8', background: '#f6fbf8', borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 } },
+      R('b', { style: { fontSize: 13.5, color: '#05623c' } }, 'فرص تعويض درجات السلوك — من مهامك'),
+      R('span', { style: { fontSize: 12, color: '#5c686d', lineHeight: 1.8 } }, 'دور الموجّه الطلابي، البند 7 (ص13): «توعية الطلبة المخالفين سلوكيًا بحقهم في فرص تعويض درجات السلوك الإيجابي المحسومة». ويقدّم الطالب الشواهد التي تثبت قيامه بفرصة تعويضية لوكيل شؤون الطلبة، ويحتفظ بها في ملفه (المادة 5، ص16).'),
+      R('label', { style: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: comp.aware ? '#05623c' : '#22333a', cursor: 'pointer' } },
+        R('input', { type: 'checkbox', 'data-comp-aware': '1', checked: !!comp.aware, onChange: () => setComp({ aware: comp.aware ? '' : new Date().toISOString() }) }),
+        comp.aware ? 'وُعّي الطالب بحقه في التعويض — ' + this.hijri(new Date(comp.aware)) : 'توعية الطالب بحقه في فرص تعويض الدرجات المحسومة'),
+      comp.items.length ? R('div', { style: { display: 'flex', flexDirection: 'column', gap: 4 } }, comp.items.map((it, i) => R('div', { key: i, style: { display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 12.5 } },
+        R('span', { style: { color: '#5c686d', flex: '0 0 auto' } }, this.hijri(new Date(it.date))),
+        R('span', { style: { flex: 1 } }, it.text),
+        R('button', { type: 'button', 'aria-label': 'حذف', style: { background: 'none', border: 'none', color: '#8a2325', cursor: 'pointer', fontFamily: 'inherit' }, onClick: () => setComp({ items: comp.items.filter((_, j) => j !== i) }) }, '✕')))) : null,
+      R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+        R('input', { value: h.compText || '', 'data-comp-text': '1', placeholder: 'فرصة تعويضية نفّذها الطالب (مثل: مشاركة في حملة تطوعية)', onChange: e => this.setHelper({ compText: e.target.value }), style: this.sanadInput({ flex: '1 1 220px' }) }),
+        R('button', { type: 'button', style: this.sanadBtn('#fff', '#05623c', '#05623c'), onClick: () => {
+          const t = String(h.compText || '').trim(); if (!t) return;
+          setComp({ items: comp.items.concat([{ date: new Date().toISOString(), text: t }]) }); this.setHelper({ compText: '' });
+        } }, 'إضافة'),
+        R('button', { type: 'button', style: this.sanadBtn('#fff', ink, ink), onClick: () => this.helperPrepareForm('compensate', c) }, 'جهّز: ' + this.RULE_FORMS.compensate.short)));
+  }
+
+  helperCaseRecs(c) {
+    const R = React.createElement;
+    const list = this.recsState().filter(r => r.caseId === c.id);
+    if (!list.length) return null;
+    return R('div', { style: { border: '1px solid #e0e6e9', borderRadius: 14, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 } },
+      R('b', { style: { fontSize: 13, color: '#0a7f7d' } }, 'توصيات لجنة التوجيه لهذا الطالب'),
+      list.map(r => R('span', { key: r.id, style: { fontSize: 12.5, color: r.doneAt ? '#05623c' : '#22333a' } }, (r.doneAt ? '✓ ' : '• ') + r.text + (r.owner ? ' — ' + r.owner : '') + (r.due && !r.doneAt ? ' (الموعد ' + this.dayHijri(r.due) + ')' : ''))));
+  }
+
+  // توصيات لجنة التوجيه — دور الموجّه، البند 9؛ ودور اللجنة، البند 14
+  recsView() {
+    const R = React.createElement, ink = '#15445a', h = this.helperUi(), today = this.todayStr();
+    const f = Object.assign({ meeting: today, text: '', owner: '', due: '', caseId: '' }, h.recDraft || {});
+    const setF = patch => this.setHelper({ recDraft: Object.assign({}, f, patch), recMsg: '' });
+    const recs = this.recsState();
+    const openCases = this.casesState().filter(c => !c.closedAt);
+    const caseName = id => { const c = this.casesState().find(x => x.id === id); return c ? c.student.name : ''; };
+    const lab = t => R('span', { style: { fontSize: 12.5, fontWeight: 700, color: '#5c686d' } }, t);
+    const box = (label, el, wide) => R('label', { style: { display: 'flex', flexDirection: 'column', gap: 6, gridColumn: wide ? '1 / -1' : 'auto' } }, lab(label), el);
+    const openR = recs.filter(r => !r.doneAt).sort((a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : 1);
+    const doneR = recs.filter(r => r.doneAt);
+    const card = r => {
+      const late = !r.doneAt && r.due && r.due < today, due = !r.doneAt && r.due && r.due <= today;
+      return R('div', { key: r.id, 'data-rec': r.id, style: { border: '1px solid ' + (late ? '#ecc5c5' : due ? '#9fd8d6' : '#e0e6e9'), background: r.doneAt ? '#f6fbf8' : late ? '#fdf5f5' : '#fff', borderRadius: 14, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 } },
+        R('span', { style: { fontSize: 13.5, color: '#22333a', lineHeight: 1.8, fontWeight: 700 } }, r.text),
+        R('span', { style: { fontSize: 12, color: '#5c686d' } }, ['اجتماع ' + this.dayHijri(r.meeting), r.owner ? 'المسؤول: ' + r.owner : '', caseName(r.caseId) ? 'الطالب: ' + caseName(r.caseId) : ''].filter(Boolean).join(' — ')),
+        r.doneAt ? R('span', { style: { fontSize: 12, fontWeight: 700, color: '#05623c' } }, 'نُفّذت في ' + this.hijri(new Date(r.doneAt)))
+          : r.due ? R('span', { style: { fontSize: 12, fontWeight: 700, color: late ? '#8a2325' : due ? '#0a5f5d' : '#5c686d' } }, 'موعد التنفيذ: ' + this.dayHijri(r.due) + (late ? ' — متأخرة' : due ? ' — اليوم' : '')) : null,
+        R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+          R('button', { type: 'button', style: this.sanadBtn(r.doneAt ? '#fff' : '#05623c', r.doneAt ? '#5c686d' : '#fff', r.doneAt ? '#d5d5d5' : ''), onClick: () => this.setRecs(this.recsState().map(x => x.id === r.id ? Object.assign({}, x, { doneAt: x.doneAt ? '' : new Date().toISOString() }) : x)) },
+            r.doneAt ? 'إعادة فتح' : 'نُفّذت'),
+          R('button', { type: 'button', style: this.sanadBtn('#fff', '#8a2325', '#ecc5c5'), onClick: () => { if (window.confirm('حذف هذه التوصية؟')) this.setRecs(this.recsState().filter(x => x.id !== r.id)); } }, 'حذف')));
+    };
+    return R('div', { 'data-recs': '1', style: { display: 'flex', flexDirection: 'column', gap: 14 } },
+      R('div', { style: { background: '#e4f0f5', borderRadius: 12, padding: '10px 14px', fontSize: 12.5, lineHeight: 1.9, color: ink } },
+        'سجّل توصيات كل اجتماع للجنة التوجيه الطلابي وتابع تنفيذها: «تفعيل قرارات وتوصيات لجنة التوجيه الطلابي في المدرسة ومتابعة تنفيذها» (دور الموجّه، البند 9، ص13)، و«توثيق محاضر اللجنة ومتابعة تنفيذ التوصيات» (دور اللجنة، البند 14، ص12).'),
+      R('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10 } },
+        box('نص التوصية', R('textarea', { value: f.text, rows: 2, 'data-rec-text': '1', onChange: e => setF({ text: e.target.value }), style: this.sanadInput({ width: '100%', resize: 'vertical' }) }), true),
+        box('تاريخ الاجتماع', R('input', { type: 'date', value: f.meeting, onChange: e => setF({ meeting: e.target.value }), style: this.sanadInput({ width: '100%' }) })),
+        box('موعد التنفيذ', R('input', { type: 'date', value: f.due, 'data-rec-due': '1', onChange: e => setF({ due: e.target.value }), style: this.sanadInput({ width: '100%' }) })),
+        box('المسؤول عن التنفيذ', R('input', { value: f.owner, list: 'tm-rec-owners', onChange: e => setF({ owner: e.target.value }), style: this.sanadInput({ width: '100%' }) })),
+        R('datalist', { id: 'tm-rec-owners' }, ['الموجّه الطلابي', 'وكيل شؤون الطلبة', 'المعلم', 'رائد النشاط', 'ولي الأمر', 'إدارة المدرسة'].map(o => R('option', { key: o, value: o }))),
+        box('الطالب (اختياري)', R('select', { value: f.caseId, onChange: e => setF({ caseId: e.target.value }), style: this.sanadInput({ width: '100%' }) },
+          [R('option', { key: '', value: '' }, 'توصية عامة')].concat(openCases.map(c => R('option', { key: c.id, value: c.id }, c.student.name)))))),
+      h.recMsg ? R('div', { role: 'alert', style: { color: '#8a2325', fontSize: 13, fontWeight: 700 } }, h.recMsg) : null,
+      R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+        R('button', { type: 'button', style: this.sanadBtn('#05623c', '#fff'), onClick: () => {
+          if (!f.text.trim()) { this.setHelper({ recMsg: 'اكتب نص التوصية.' }); return; }
+          this.setRecs(this.recsState().concat([{ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), meeting: f.meeting || today, text: f.text.trim(), owner: f.owner.trim(), due: f.due, caseId: f.caseId, doneAt: '' }]));
+          this.setHelper({ recDraft: Object.assign({}, f, { text: '', due: '', caseId: '' }), recMsg: '' });
+        } }, 'إضافة التوصية'),
+        R('button', { type: 'button', style: this.sanadBtn('#fff', ink, ink), onClick: () => this.helperPrepareForm('committee', null) }, 'جهّز: محضر اجتماع اللجنة')),
+      openR.length ? openR.map(card) : R('div', { style: { fontSize: 13, color: '#5c686d' } }, 'لا توجد توصيات مفتوحة.'),
+      doneR.length ? R('button', { type: 'button', style: Object.assign(this.sanadBtn('#fff', '#5c686d', '#d5d5d5'), { alignSelf: 'flex-start' }), onClick: () => this.setHelper({ showDoneRecs: !h.showDoneRecs }) },
+        (h.showDoneRecs ? 'إخفاء' : 'عرض') + ' التوصيات المنفّذة (' + doneR.length + ')') : null,
+      h.showDoneRecs ? doneR.map(card) : null);
+  }
+
+  // التقرير الإحصائي الفصلي — دور المدرسة، البند 24 (ص10)؛ بلا أسماء
+  reportOpts() {
+    const s = this.state, h = this.helperUi();
+    const back = new Date(Date.now() - 120 * 86400000), p = n => String(n).padStart(2, '0');
+    return Object.assign({ term: (s.plan && s.plan.term) || 'الفصل الدراسي الأول', hy: (s.plan && s.plan.hy) || 1448,
+      from: back.getFullYear() + '-' + p(back.getMonth() + 1) + '-' + p(back.getDate()), to: this.todayStr(), abuse: '', highrisk: '' }, h.report || {});
+  }
+
+  reportData(o) {
+    const inRange = iso => { const d = String(iso || '').slice(0, 10); return d && d >= o.from && d <= o.to; };
+    const cases = this.casesState();
+    const per = cases.filter(c => inRange(c.openedAt));
+    const out = { absUn: { 3: 0, 5: 0, 10: 0 }, absEx: { 3: 0, 5: 0, 10: 0 }, tardy: [0, 0, 0, 0], deg: {}, probs: {}, grade: {}, open: 0, closed: 0, total: per.length, tasks: 0, follows: 0, recs: 0, recsDone: 0 };
+    per.forEach(c => {
+      const pids = (c.history || []).map(x => x.procId).concat([c.procId]);
+      const p0 = this.PROCEDURES[pids[0]] || {};
+      const top = (pre, list) => Math.max.apply(null, pids.map(id => { const m = id.match(new RegExp('^' + pre + '-(\\d+)$')); return m ? +m[1] : 0; }).concat([0]));
+      if (p0.group === 'absUn') { const n = top('un'); if (out.absUn[n] != null) out.absUn[n]++; }
+      else if (p0.group === 'absEx') { const n = top('ex'); if (out.absEx[n] != null) out.absEx[n]++; }
+      else if (p0.group === 'tardy') { const n = top('t'); if (n) out.tardy[n - 1]++; }
+      else if (p0.group === 'behavior') {
+        out.deg[p0.degree] = (out.deg[p0.degree] || 0) + 1;
+        if (c.problem) out.probs[c.problem] = (out.probs[c.problem] || 0) + 1;
+      }
+      const g = (c.student && c.student.grade) || 'غير محدد';
+      out.grade[g] = (out.grade[g] || 0) + 1;
+      if (c.closedAt) out.closed++; else out.open++;
+    });
+    cases.forEach(c => {
+      const sets = (c.history || []).map(x => [x.procId, x.steps || {}]).concat([[c.procId, c.steps || {}]]);
+      sets.forEach(([pid, steps]) => {
+        const p = this.PROCEDURES[pid]; if (!p) return;
+        p.steps.forEach((st, i) => { if (this.helperMine(st) && steps[i] && steps[i].done && inRange(steps[i].date)) out.tasks++; });
+      });
+      (c.followLog || []).forEach(x => { if (inRange(x.date)) out.follows++; });
+    });
+    this.recsState().forEach(r => { if (inRange(r.meeting)) { out.recs++; if (r.doneAt) out.recsDone++; } });
+    out.topProbs = Object.keys(out.probs).sort((a, b) => out.probs[b] - out.probs[a]).slice(0, 5).map(k => [k, out.probs[k]]);
+    return out;
+  }
+
+  reportView() {
+    const R = React.createElement, h = this.helperUi(), o = this.reportOpts();
+    const setO = patch => this.setHelper({ report: Object.assign({}, o, patch) });
+    const lab = t => R('span', { style: { fontSize: 12.5, fontWeight: 700, color: '#5c686d' } }, t);
+    const box = (label, el) => R('label', { style: { display: 'flex', flexDirection: 'column', gap: 6 } }, lab(label), el);
+    const chip = on => this.sanadBtn(on ? '#15445a' : '#fff', on ? '#fff' : '#15445a', on ? '' : '#d5d5d5');
+    return R('div', { 'data-report': '1', style: { display: 'flex', flexDirection: 'column', gap: 14 } },
+      R('div', { style: { background: '#e4f0f5', borderRadius: 12, padding: '10px 14px', fontSize: 12.5, lineHeight: 1.9, color: '#15445a' } },
+        'تقرير إحصائي يُبنى من حالاتك في سَنَد، بلا أي أسماء، للرفع لإدارة التعليم (قسم التوجيه الطلابي): «الرفع لإدارة التعليم (قسم التوجيه الطلابي) بتقرير عن حالات الإيذاء والإهمال، والمشكلات السلوكية إحصائياً ونوعياً خلال الفصل الدراسي» (دور إدارة المدرسة، البند 24، ص10).'),
+      R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, ['الفصل الدراسي الأول', 'الفصل الدراسي الثاني', 'الفصل الدراسي الثالث'].map(t => R('button', { key: t, type: 'button', style: chip(o.term === t), onClick: () => setO({ term: t }) }, t))),
+      R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, [1447, 1448, 1449, 1450].map(y => R('button', { key: y, type: 'button', style: chip(+o.hy === y), onClick: () => setO({ hy: y }) }, y + 'هـ'))),
+      R('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10 } },
+        box('من تاريخ', R('input', { type: 'date', value: o.from, 'data-report-from': '1', onChange: e => setO({ from: e.target.value }), style: this.sanadInput({ width: '100%' }) })),
+        box('إلى تاريخ', R('input', { type: 'date', value: o.to, 'data-report-to': '1', onChange: e => setO({ to: e.target.value }), style: this.sanadInput({ width: '100%' }) })),
+        box('حالات الإيذاء والإهمال', R('input', { value: o.abuse, inputMode: 'numeric', placeholder: 'يدويًا', onChange: e => setO({ abuse: e.target.value.replace(/[^\d٠-٩]/g, '') }), style: this.sanadInput({ width: '100%' }) })),
+        box('الحالات عالية الخطورة', R('input', { value: o.highrisk, inputMode: 'numeric', placeholder: 'يدويًا', onChange: e => setO({ highrisk: e.target.value.replace(/[^\d٠-٩]/g, '') }), style: this.sanadInput({ width: '100%' }) }))),
+      R('span', { style: { fontSize: 12, color: '#5c686d', lineHeight: 1.8 } }, 'حالات الإيذاء والحالات عالية الخطورة لا تُحفظ في المنصة حمايةً للطالب، فأدخل عددها يدويًا. تُحسب الحالات التي فُتحت خلال الفترة.'),
+      R('button', { type: 'button', style: Object.assign(this.sanadBtn('#05623c', '#fff'), { alignSelf: 'flex-start', minHeight: 42 }), onClick: this.exportPdf }, 'تنزيل التقرير PDF'));
+  }
+
+  reportSheet() {
+    const R = React.createElement, ink = '#15445a', s = this.state, o = this.reportOpts(), d = this.reportData(o);
+    const cell = { border: '1px solid ' + ink, padding: '5px 7px', fontSize: 13, textAlign: 'center' };
+    const th = Object.assign({}, cell, { background: ink, color: '#fff', fontWeight: 700 });
+    const first = Object.assign({}, cell, { textAlign: 'start', fontWeight: 700, color: ink });
+    const table = (head, rows) => R('table', { style: { borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' } },
+      R('thead', null, R('tr', null, head.map((x, i) => R('th', { key: i, style: Object.assign({}, th, i === 0 ? { width: '34%' } : {}) }, x)))),
+      R('tbody', null, rows.map((r, i) => R('tr', { key: i }, r.map((x, j) => R('td', { key: j, style: j === 0 ? first : cell }, x))))));
+    const h3 = t => R('div', { style: { fontSize: 14.5, fontWeight: 700, color: ink, marginTop: 4 } }, t);
+    const sum = a => a.reduce((x, y) => x + y, 0);
+    const degs = [['1', 'الأولى'], ['2', 'الثانية'], ['3', 'الثالثة'], ['4', 'الرابعة'], ['4s', 'الرابعة — تجاه منسوبي المدرسة'], ['5', 'الخامسة']];
+    const num = v => String(v || '').replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 0x660)) || '—';
+    const grades = ['أول ثانوي', 'ثاني ثانوي', 'ثالث ثانوي'].concat(Object.keys(d.grade).filter(g => ['أول ثانوي', 'ثاني ثانوي', 'ثالث ثانوي'].indexOf(g) < 0));
+    return R('div', { 'data-report-sheet': '1', style: { display: 'flex', flexDirection: 'column', gap: 8, flex: 1, fontSize: 13.5 } },
+      R('div', { style: { textAlign: 'center', fontSize: 13, color: '#3d4a50' } }, 'الفترة من ' + this.dayHijri(o.from) + ' إلى ' + this.dayHijri(o.to) + ' — عدد الحالات المسجّلة: ' + d.total),
+      h3('أولًا: الغياب'),
+      table(['النوع', '3 أيام', '5 أيام', '10 أيام', 'المجموع'], [
+        ['الغياب بدون عذر', d.absUn[3], d.absUn[5], d.absUn[10], d.absUn[3] + d.absUn[5] + d.absUn[10]],
+        ['الغياب بعذر', d.absEx[3], d.absEx[5], d.absEx[10], d.absEx[3] + d.absEx[5] + d.absEx[10]]]),
+      R('div', { style: { fontSize: 11.5, color: '#5c686d' } }, 'يُحسب كل طالب مرة واحدة بأعلى مستوى بلغه خلال الفترة.'),
+      h3('ثانيًا: التأخر الصباحي'),
+      table(['البيان', 'الإجراء الأول', 'الثاني', 'الثالث', 'الرابع', 'المجموع'], [['عدد الحالات'].concat(d.tardy, [sum(d.tardy)])]),
+      h3('ثالثًا: المشكلات السلوكية حسب الدرجة'),
+      table(['الدرجة', 'عدد الحالات'], degs.map(g => [g[1], d.deg[g[0]] || 0]).concat([['المجموع', sum(degs.map(g => d.deg[g[0]] || 0))]])),
+      d.topProbs.length ? R('div', { style: { fontSize: 12.5, lineHeight: 1.8 } }, R('b', { style: { color: ink } }, 'أكثر المشكلات تكرارًا: '), d.topProbs.map(x => x[0] + ' (' + x[1] + ')').join('، ')) : null,
+      h3('رابعًا: حالات الإيذاء والإهمال والحالات عالية الخطورة'),
+      table(['البيان', 'العدد'], [['حالات الإيذاء والإهمال', num(o.abuse)], ['الحالات عالية الخطورة', num(o.highrisk)]]),
+      h3('خامسًا: التوزيع حسب الصف'),
+      table(['الصف'].concat(grades), [['عدد الحالات'].concat(grades.map(g => d.grade[g] || 0))]),
+      h3('سادسًا: خدمات التوجيه الطلابي'),
+      table(['البيان', 'العدد'], [['الحالات المفتوحة / المغلقة', d.open + ' / ' + d.closed], ['مهام الموجّه الطلابي المنفّذة', d.tasks],
+        ['مواعيد المتابعة المنجزة', d.follows], ['توصيات لجنة التوجيه (المنفّذ / الكل)', d.recsDone + ' / ' + d.recs]]),
+      R('div', { style: { marginTop: 'auto', paddingTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, fontSize: 13.5 } },
+        ['الموجّه الطلابي', 'مدير المدرسة'].map((r, i) => R('div', { key: i, style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+          R('b', { style: { color: ink, textAlign: 'center' } }, r),
+          R('span', null, 'الاسم: ', i === 0 && s.user && s.user.name ? R('b', { style: { color: ink } }, s.user.name) : '…………………………'),
+          R('span', null, 'التوقيع: …………………………')))));
   }
 
   // ===== سجل الطلاب: يُرفع مرة واحدة من Excel، ويُستخدم للتعبئة التلقائية =====
@@ -5340,7 +5612,7 @@ class Component extends DCLogic {
     const td = { borderBottom: '1px solid #e8eaeb', padding: '6px 6px', fontSize: 12.5, verticalAlign: 'top' };
     return R('div', { 'data-roster': '1', style: { display: 'flex', flexDirection: 'column', gap: 14 } },
       R('div', { style: { background: '#e4f0f5', borderRadius: 12, padding: '11px 14px', fontSize: 12.5, lineHeight: 1.9, color: ink } },
-        'ارفع ملف الطلاب مرة واحدة (Excel)، وبعدها يكفي أن تكتب اسم الطالب في المرشد المساعد أو في النماذج الرسمية لتكتمل بياناته. ',
+        'ارفع ملف الطلاب مرة واحدة (Excel)، وبعدها يكفي أن تكتب اسم الطالب في سَنَد أو في النماذج الرسمية لتكتمل بياناته. ',
         R('b', null, 'البيانات تُحفظ في متصفح هذا الجهاز فقط وتحتوي أرقام هوية: '), 'احمِ الجهاز بكلمة مرور، وصدّر نسخة احتياطية بعد الرفع.'),
       R('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
         R('label', { style: btn(ink, '#fff') }, list.length ? 'رفع ملف جديد (يستبدل القائمة)' : 'رفع ملف الطلاب (Excel)',
@@ -7217,6 +7489,7 @@ class Component extends DCLogic {
 
   fileName() {
     if (this.state.section === 'helper') {
+      if (this.helperUi().view === 'report') { const o = this.reportOpts(); return 'التقرير الإحصائي الفصلي — ' + o.term + ' ' + o.hy + 'هـ.pdf'; }
       const c = this.helperCurrent();
       return 'سجل الإجراءات' + (c && c.student && c.student.name ? ' — ' + c.student.name : '') + '.pdf';
     }
@@ -7671,10 +7944,10 @@ class Component extends DCLogic {
     const xt = this.examTokens();
     const o = this.output();
 
-    const navDefs = [['home', 'الرئيسية'], ['helper', 'المرشد المساعد'], ['session', 'تحضير جلسة'], ['minutes', 'محضر اجتماع اللجنة'], ['letter', 'رسالة لولي أمر'], ['program', 'برنامج توعوي'], ['exam', 'جداول الاختبارات'], ['plan', 'الخطة الفصلية'], ['followup', 'متابعة الخطة'], ['survey', 'بوصلة التخصص'], ['absence', 'إجراءات الغياب'], ['hasr', 'حصر معلومات الطلاب'], ['contact', 'التواصل مع ولي الأمر'], ['rules', 'نماذج قواعد السلوك'], ['weekly', 'المتابعة الأسبوعية'], ['referral', 'إحالة طالب'], ['casestudy', 'دراسة حالة'], ['bank', 'بنك الأفكار']];
+    const navDefs = [['home', 'الرئيسية'], ['helper', 'سَنَد'], ['session', 'تحضير جلسة'], ['minutes', 'محضر اجتماع اللجنة'], ['letter', 'رسالة لولي أمر'], ['program', 'برنامج توعوي'], ['exam', 'جداول الاختبارات'], ['plan', 'الخطة الفصلية'], ['followup', 'متابعة الخطة'], ['survey', 'بوصلة التخصص'], ['absence', 'إجراءات الغياب'], ['hasr', 'حصر معلومات الطلاب'], ['contact', 'التواصل مع ولي الأمر'], ['rules', 'نماذج قواعد السلوك'], ['weekly', 'المتابعة الأسبوعية'], ['referral', 'إحالة طالب'], ['casestudy', 'دراسة حالة'], ['bank', 'بنك الأفكار']];
     const titles = {
       home: ['مساعد الموجّه الطلابي', 'منصة تمهيد'],
-      helper: ['إجراءات الدليل مع بيان الجهة المسؤولة — مهامك أولًا', 'المرشد المساعد'],
+      helper: ['رفيقك في إجراءات الدليل — مهامك أولًا', 'سَنَد'],
       session: ['قبل الدخول للجلسة', 'تحضير جلسة إرشادية'],
       minutes: ['النموذج المعتمد أو النسخة الموسّعة', 'محضر اجتماع لجنة التوجيه الطلابي'],
       letter: ['مراسلات الأسرة', 'رسالة لولي أمر'],
@@ -7914,7 +8187,7 @@ class Component extends DCLogic {
       helperBackBtn: React.createElement('button', { type: 'button', 'data-helper-back': '1',
         onClick: () => { this.setState({ section: 'helper', helperReturn: false }); if (!s.helperReturn) this.setHelper({ view: 'new', temp: null, draft: Object.assign({}, this.helperUi().draft, { group: 'absUn' }) }); window.scrollTo(0, 0); },
         style: { alignSelf: 'flex-start', background: '#f0fafa', color: '#0a5f5d', border: '1px solid #9fd8d6', borderRadius: 99, minHeight: 40, padding: '0 16px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' } },
-        s.helperReturn ? '→ العودة إلى الحالة في المرشد المساعد' : 'ابدأ إجراء غياب لطالب في المرشد المساعد'),
+        s.helperReturn ? '→ العودة إلى الحالة في سَنَد' : 'ابدأ إجراء غياب لطالب في سَنَد'),
       isBank: s.section === 'bank',
       isAbout: s.section === 'about',
       isSurvey: s.section === 'survey',
