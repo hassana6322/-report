@@ -156,7 +156,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             <button onClick="{{ togglePolicy }}" style="align-self:flex-start;background:transparent;border:none;color:#0da9a6;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:6px 0;min-height:32px">{{ policyToggleLabel }}</button>
             <sc-if value="{{ policyOpen }}" hint-placeholder-val="{{ false }}">
               <div style="background:#f6f8f9;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:9px;max-height:220px;overflow:auto">
-                <span style="font-size:12.5px;line-height:1.95;color:#22333a">١. تُحفظ جميع البيانات في هذا الجهاز وهذا المتصفح فقط، ولا تُرسل إلى أي جهة خارجية.</span>
+                <span style="font-size:12.5px;line-height:1.95;color:#22333a">١. تُحفظ جميع البيانات في هذا الجهاز وهذا المتصفح فقط، ولا تُرسل إلى أي جهة خارجية؛ إلا إذا فعّلتَ بنفسك «الحفظ في السحابة»، فتُرفع مشفّرةً بكلمة مرورك إلى حسابك الخاص في Firebase، ولا يستطيع أحد غيرك فتحها.</span>
                 <span style="font-size:12.5px;line-height:1.95;color:#22333a">٢. لا تُدخل من بيانات الطالب إلا ما يلزم العمل؛ ويُفضَّل الاكتفاء بالاسم الأول والصف عند إمكان ذلك.</span>
                 <span style="font-size:12.5px;line-height:1.95;color:#22333a">٣. يمنع تدوين تفاصيل حالات الإيذاء أو الحالات الحساسة في أي مخرَج قابل للطباعة أو التداول؛ مسارها النظامي هو الإبلاغ المعتمد.</span>
                 <span style="font-size:12.5px;line-height:1.95;color:#22333a">٤. نتائج بوصلة التخصص أداة استرشادية للنقاش، لا تصنيفاً للطالب ولا قراراً نهائياً بشأنه.</span>
@@ -173,6 +173,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
         <div style="margin-top:24px">
           <x-import component-from-global-scope="MOEDesignSystem_ddd988.Button" full-width="{{ true }}" size="lg" onClick="{{ submitAuth }}" hint-size="100%,52px">{{ authButtonLabel }}</x-import>
         </div>
+        {{ cloudAuthPanel }}
         <sc-if value="{{ hasConsentStamp }}" hint-placeholder-val="{{ false }}">
           <span style="margin-top:14px;font-size:11.5px;color:#6b7480;line-height:1.8">{{ consentStamp }}</span>
         </sc-if>
@@ -233,6 +234,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
             استيراد نسخة
             <input type="file" accept="application/json,.json" onChange="{{ onImportData }}" style="display:none" />
           </label>
+          <button onClick="{{ goCloud }}" data-cloud-nav="1" style="background:rgba(95,221,169,.16);border:1px solid rgba(95,221,169,.45);color:#fff;border-radius:10px;min-height:44px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:var(--motion-hover)" style-hover="background:rgba(95,221,169,.26)">{{ cloudNavLabel }}</button>
           <sc-if value="{{ hasDataNotice }}" hint-placeholder-val="{{ false }}">
             <span style="font-size:11.5px;line-height:1.8;color:#9fe8c6">{{ dataNotice }}</span>
           </sc-if>
@@ -279,6 +281,11 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
           <span style="font-size:13px;font-weight:700;color:#7a4e14">تنبيه بشأن الحالات الحساسة</span>
           <span style="font-size:12.5px;line-height:1.95;color:#7a4e14">لا تُدوَّن تفاصيل حالات الإيذاء أو الحالات الحساسة في مخرَج قابل للطباعة أو التداول. مسارها النظامي هو الإبلاغ المعتمد لجهة الاختصاص، ويُكتفى هنا بالإشارة العامة دون تفاصيل.</span>
         </div>
+      </sc-if>
+
+      {{ cloudBanner }}
+      <sc-if value="{{ isCloud }}" hint-placeholder-val="{{ false }}">
+        {{ cloudView }}
       </sc-if>
 
       <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
@@ -2019,7 +2026,7 @@ input:focus,select:focus,textarea:focus{border-color:#69cee3;box-shadow:0 0 0 3p
       <sc-if value="{{ isCase }}" hint-placeholder-val="{{ false }}">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;align-items:start">
           <div style="background:#fff;box-shadow:0 6px 20px rgba(0,56,69,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:16px">
-            <div style="background:#f4efe2;border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.9;color:#15445a">هذه مسوّدة سرية تُحفظ على جهازك فقط. التوثيق الرسمي لدراسة الحالة يتم في نظام نور.</div>
+            <div style="background:#f4efe2;border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.9;color:#15445a">هذه مسوّدة سرية تُحفظ على جهازك (وفي سحابتك المشفّرة إن فعّلتها). التوثيق الرسمي لدراسة الحالة يتم في نظام نور.</div>
 
             <sc-if value="{{ cRefReady }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid #d5d5d5;border-radius:12px;padding:10px 14px">
@@ -3908,6 +3915,9 @@ class Component extends DCLogic {
       }, 60);
     }
     window.addEventListener('resize', this.measure);
+    this._onOnline = () => this.cloudSchedule();
+    window.addEventListener('online', this._onOnline);
+    setTimeout(() => this.cloudCheck(), 1200);
     this._beforePrint = () => this.setPrintZoom(this.pageRef.current);
     window.addEventListener('beforeprint', this._beforePrint);
     setTimeout(this.measure, 60);
@@ -3929,6 +3939,7 @@ class Component extends DCLogic {
   safeSave(key, value) {
     let ok = true;
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { ok = false; }
+    if (ok && key !== this.CLOUD_KEY && this.cloudSchedule) this.cloudSchedule();
     if (key === 'tamheed.v2' || !ok) {
       if (!ok !== !!this.state.saveError) this.setState({ saveError: !ok });
     }
@@ -5197,6 +5208,398 @@ class Component extends DCLogic {
           ni > -1 ? 'مهمتك التالية: ' + (p.steps[ni].text.length > 90 ? p.steps[ni].text.slice(0, 90) + '…' : p.steps[ni].text) : this.helperProgress(c).total ? 'اكتملت مهامك — راجع الانتقال للمستوى التالي أو أغلق الحالة.' : 'لا مهام لك في هذا الإجراء — للاطلاع.',
           'آخر إجراء ' + this.helperDaysAgo(this.helperLastTouch(c)));
       })));
+  }
+
+  // ===== الحفظ في السحابة (Firebase): حساب بالبريد، وتشفير على الجهاز قبل الرفع، ونسخة يومية =====
+  // لا يغادر الجهازَ إلا ملفٌ مشفّر بمفتاح مشتق من كلمة مرور الحساب؛ لا تراه Google ولا غيرها.
+  CLOUD_KEY = 'tamheed.cloud.v1';
+
+  CLOUD_RULES = '{\n  "rules": {\n    "users": {\n      "$uid": {\n        ".read": "auth != null && auth.uid === $uid",\n        ".write": "auth != null && auth.uid === $uid"\n      }\n    }\n  }\n}';
+
+  cloudState() {
+    if (this._cloud) return this._cloud;
+    let r = null;
+    try { r = JSON.parse(localStorage.getItem(this.CLOUD_KEY) || 'null'); } catch (e) {}
+    this._cloud = Object.assign({ apiKey: '', dbUrl: '', email: '', uid: '', refreshToken: '', idToken: '', expiresAt: 0, salt: '', lastRemote: 0, lastHash: '', lastSync: 0 }, r || {});
+    return this._cloud;
+  }
+
+  setCloud(patch) {
+    this._cloud = Object.assign({}, this.cloudState(), patch);
+    try { localStorage.setItem(this.CLOUD_KEY, JSON.stringify(this._cloud)); } catch (e) {}
+    this.setState({ cloudTick: (this.state.cloudTick || 0) + 1 });
+  }
+
+  cloudUi(patch) { this.setState(st => ({ cloudUi: Object.assign({}, st.cloudUi || {}, patch) })); }
+
+  cloudConnected() { const c = this.cloudState(); return !!(c.apiKey && c.dbUrl && c.uid && c.refreshToken); }
+
+  // يقبل نص firebaseConfig كما يُنسخ من Firebase، أو المفتاح والرابط مباشرة
+  cloudParseConfig(text) {
+    const t = String(text || '');
+    const pick = k => { const m = t.match(new RegExp(k + '\\s*["\']?\\s*[:=]\\s*["\']([^"\']+)["\']')); return m ? m[1].trim() : ''; };
+    let apiKey = pick('apiKey'), dbUrl = pick('databaseURL');
+    if (!apiKey) { const m = t.match(/AIza[0-9A-Za-z_\-]{20,}/); if (m) apiKey = m[0]; }
+    if (!dbUrl) { const m = t.match(/https:\/\/[a-z0-9\-]+(?:-default-rtdb)?\.(?:[a-z0-9\-]+\.)?(?:firebasedatabase\.app|firebaseio\.com)/i); if (m) dbUrl = m[0]; }
+    return { apiKey, dbUrl: dbUrl.replace(/\/+$/, '') };
+  }
+
+  cloudErr(code) {
+    const c = String(code || '');
+    if (/EMAIL_EXISTS/.test(c)) return 'هذا البريد مسجّل مسبقًا. اضغط «تسجيل الدخول» بدل «إنشاء حساب».';
+    if (/EMAIL_NOT_FOUND|INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD/.test(c)) return 'البريد أو كلمة المرور غير صحيحة.';
+    if (/WEAK_PASSWORD/.test(c)) return 'كلمة المرور قصيرة؛ يجب ألا تقل عن 6 أحرف (ويُفضّل 10 فأكثر).';
+    if (/INVALID_EMAIL/.test(c)) return 'صيغة البريد غير صحيحة.';
+    if (/OPERATION_NOT_ALLOWED/.test(c)) return 'تسجيل الدخول بالبريد غير مفعّل في مشروع Firebase. فعّله من Authentication ← Sign-in method ← Email/Password.';
+    if (/API key not valid|API_KEY_INVALID/.test(c)) return 'مفتاح apiKey غير صحيح. انسخ إعدادات المشروع من جديد.';
+    if (/TOO_MANY_ATTEMPTS/.test(c)) return 'محاولات كثيرة. انتظر قليلًا ثم أعد المحاولة.';
+    if (/Permission denied|401/.test(c)) return 'رفضت قاعدة البيانات الوصول. تأكد من لصق قواعد الحماية (Rules) ونشرها كما في الخطوة 3.';
+    if (/404|Not Found/.test(c)) return 'رابط قاعدة البيانات غير صحيح، أو لم تُنشأ Realtime Database بعد.';
+    if (/DECRYPT/.test(c)) return 'كلمة المرور لا تفتح بيانات السحابة. استخدم الكلمة نفسها التي رفعت بها البيانات أول مرة.';
+    if (/Failed to fetch|NetworkError|network/i.test(c)) return 'لا يوجد اتصال بالإنترنت. سيُعاد الرفع تلقائيًا عند عودة الاتصال.';
+    return 'تعذّر الاتصال بالسحابة (' + c.slice(0, 80) + ').';
+  }
+
+  async cloudAuth(mode, email, password, cfg) {
+    const c = cfg || this.cloudState();
+    const url = 'https://identitytoolkit.googleapis.com/v1/accounts:' + (mode === 'signup' ? 'signUp' : 'signInWithPassword') + '?key=' + encodeURIComponent(c.apiKey);
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, returnSecureToken: true }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.idToken) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+    return { uid: j.localId, idToken: j.idToken, refreshToken: j.refreshToken, expiresAt: Date.now() + (parseInt(j.expiresIn, 10) || 3600) * 1000 - 60000, email };
+  }
+
+  async cloudToken() {
+    const c = this.cloudState();
+    if (c.idToken && Date.now() < c.expiresAt) return c.idToken;
+    const r = await fetch('https://securetoken.googleapis.com/v1/token?key=' + encodeURIComponent(c.apiKey), {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(c.refreshToken) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.id_token) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+    this.setCloud({ idToken: j.id_token, refreshToken: j.refresh_token || c.refreshToken, expiresAt: Date.now() + (parseInt(j.expires_in, 10) || 3600) * 1000 - 60000 });
+    return j.id_token;
+  }
+
+  async cloudReq(path, method, body, auth) {
+    const c = auth || this.cloudState();
+    const token = auth ? auth.idToken : await this.cloudToken();
+    const r = await fetch(c.dbUrl + '/users/' + c.uid + (path ? '/' + path : '') + '.json?auth=' + encodeURIComponent(token) + (method === 'SHALLOW' ? '&shallow=true' : ''), {
+      method: method === 'SHALLOW' ? 'GET' : (method || 'GET'), headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });
+    const j = await r.json().catch(() => null);
+    if (!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+    return j;
+  }
+
+  // ---- التشفير: PBKDF2 (310 ألف دورة) ← مفتاح AES-GCM غير قابل للاستخراج، يُحفظ في IndexedDB على هذا الجهاز فقط ----
+  b64(buf) { const a = new Uint8Array(buf); let s = ''; for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode.apply(null, a.subarray(i, i + 0x8000)); return btoa(s); }
+  unb64(str) { const s = atob(str); const a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+
+  async cloudDeriveKey(password, saltB64) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: this.unb64(saltB64), iterations: 310000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+
+  cloudIdb(mode, val) {
+    return new Promise(resolve => {
+      try {
+        const req = indexedDB.open('tamheed-cloud', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('keys');
+        req.onerror = () => resolve(null);
+        req.onsuccess = () => {
+          const db = req.result, tx = db.transaction('keys', mode === 'get' ? 'readonly' : 'readwrite'), st = tx.objectStore('keys');
+          const op = mode === 'get' ? st.get('k') : mode === 'del' ? st.delete('k') : st.put(val, 'k');
+          op.onsuccess = () => resolve(mode === 'get' ? op.result || null : true);
+          op.onerror = () => resolve(null);
+        };
+      } catch (e) { resolve(null); }
+    });
+  }
+
+  async cloudKey() {
+    if (this._cloudKey) return this._cloudKey;
+    this._cloudKey = await this.cloudIdb('get');
+    return this._cloudKey;
+  }
+
+  cloudSnapshot() {
+    const out = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('tamheed.') === 0 && k !== this.CLOUD_KEY) out[k] = localStorage.getItem(k);
+    }
+    return out;
+  }
+
+  cloudHash(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return String(h >>> 0) + ':' + str.length; }
+
+  async cloudEncrypt(obj, key) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+    return { iv: this.b64(iv), data: this.b64(data) };
+  }
+
+  async cloudDecrypt(payload, key) {
+    try {
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: this.unb64(payload.iv) }, key, this.unb64(payload.data));
+      return JSON.parse(new TextDecoder().decode(plain));
+    } catch (e) { throw new Error('DECRYPT'); }
+  }
+
+  cloudDevice() { const u = navigator.userAgent || ''; return /Mobi|Android|iPhone/i.test(u) ? 'جوال' : 'كمبيوتر'; }
+
+  // يُستدعى بعد كل حفظ محلي؛ يرفع بعد 4 ثوانٍ من آخر تعديل، ولا يرفع إن لم يتغير شيء
+  cloudSchedule() {
+    if (!this.cloudConnected()) return;
+    clearTimeout(this._cloudTimer);
+    this._cloudTimer = setTimeout(() => this.cloudUpload(false), 4000);
+  }
+
+  async cloudUpload(force) {
+    if (!this.cloudConnected() || this._cloudBusy) return;
+    const key = await this.cloudKey();
+    if (!key) { this.cloudUi({ status: 'needKey' }); return; }
+    const snap = this.cloudSnapshot(), str = JSON.stringify(snap), hash = this.cloudHash(str);
+    const c = this.cloudState();
+    if (!force && hash === c.lastHash) return;
+    this._cloudBusy = true;
+    this.cloudUi({ status: 'saving', error: '' });
+    try {
+      const remoteAt = await this.cloudReq('current/updatedAt');
+      if (!force && remoteAt && remoteAt > c.lastRemote) { this.cloudUi({ status: 'conflict', remoteAt }); return; }
+      const now = Date.now();
+      const enc = await this.cloudEncrypt(snap, key);
+      const payload = { v: 1, updatedAt: now, device: this.cloudDevice(), salt: c.salt, iv: enc.iv, data: enc.data, size: str.length };
+      await this.cloudReq('current', 'PUT', payload);
+      await this.cloudReq('daily/' + this.todayStr(), 'PUT', payload);
+      this.setCloud({ lastRemote: now, lastHash: hash, lastSync: now });
+      this.cloudUi({ status: 'saved', error: '', remoteAt: 0 });
+    } catch (e) {
+      this.cloudUi({ status: 'error', error: this.cloudErr(e.message) });
+    } finally { this._cloudBusy = false; }
+  }
+
+  // يكتب نسخة السحابة على هذا الجهاز ثم يعيد تحميل الصفحة
+  cloudApply(snap, payload, extra) {
+    const keep = this.CLOUD_KEY;
+    Object.keys(localStorage).filter(k => k.indexOf('tamheed.') === 0 && k !== keep).forEach(k => localStorage.removeItem(k));
+    Object.keys(snap || {}).forEach(k => { if (k.indexOf('tamheed.') === 0 && k !== keep) { try { localStorage.setItem(k, snap[k]); } catch (e) {} } });
+    const str = JSON.stringify(this.cloudSnapshot());
+    this._cloud = Object.assign({}, this.cloudState(), extra || {}, { lastRemote: payload.updatedAt, lastHash: this.cloudHash(str), lastSync: Date.now() });
+    try { localStorage.setItem(keep, JSON.stringify(this._cloud)); } catch (e) {}
+    location.reload();
+  }
+
+  // ربط هذا الجهاز بحساب (إنشاء أو دخول)، ثم مقارنة بياناته ببيانات السحابة
+  async cloudConnect(mode) {
+    const u = Object.assign({ email: '', password: '' }, this.state.cloudUi || {});
+    const cfg = this.cloudState();
+    if (!u.email.trim() || !u.password) { this.cloudUi({ error: 'اكتب البريد وكلمة المرور.' }); return; }
+    if (mode === 'signup' && u.password.length < 8) { this.cloudUi({ error: 'اختر كلمة مرور لا تقل عن 8 أحرف؛ فهي تقفل بياناتك المشفّرة.' }); return; }
+    this.cloudUi({ busy: true, error: '' });
+    try {
+      const auth = Object.assign({ apiKey: cfg.apiKey, dbUrl: cfg.dbUrl }, await this.cloudAuth(mode, u.email.trim(), u.password, cfg));
+      const remote = await this.cloudReq('current', 'GET', null, auth);
+      const salt = remote && remote.salt ? remote.salt : this.b64(crypto.getRandomValues(new Uint8Array(16)));
+      const key = await this.cloudDeriveKey(u.password, salt);
+      let snap = null;
+      if (remote && remote.data) snap = await this.cloudDecrypt(remote, key);
+      await this.cloudIdb('put', key);
+      this._cloudKey = key;
+      const base = { email: auth.email, uid: auth.uid, idToken: auth.idToken, refreshToken: auth.refreshToken, expiresAt: auth.expiresAt, salt };
+      if (snap) {
+        this.setCloud(Object.assign(base, { lastRemote: 0, lastHash: '' }));
+        this.cloudUi({ busy: false, password: '', choice: { snap, payload: remote } });
+      } else {
+        this.setCloud(Object.assign(base, { lastRemote: 0, lastHash: '' }));
+        this.cloudUi({ busy: false, password: '' });
+        await this.cloudUpload(true);
+      }
+    } catch (e) {
+      this.cloudUi({ busy: false, error: this.cloudErr(e.message) });
+    }
+  }
+
+  async cloudPull(daily) {
+    if (!this.cloudConnected()) return;
+    this.cloudUi({ busy: true, error: '' });
+    try {
+      const key = await this.cloudKey();
+      const payload = await this.cloudReq(daily ? 'daily/' + daily : 'current');
+      if (!payload || !payload.data) { this.cloudUi({ busy: false, error: 'لا توجد بيانات في السحابة بعد.' }); return; }
+      const snap = await this.cloudDecrypt(payload, key);
+      this.cloudApply(snap, payload);
+    } catch (e) { this.cloudUi({ busy: false, error: this.cloudErr(e.message) }); }
+  }
+
+  async cloudDays() {
+    try { const j = await this.cloudReq('daily', 'SHALLOW'); this.cloudUi({ days: Object.keys(j || {}).sort().reverse().slice(0, 30) }); }
+    catch (e) { this.cloudUi({ error: this.cloudErr(e.message) }); }
+  }
+
+  // عند فتح المنصة: هل في السحابة نسخة أحدث من جهاز آخر؟
+  async cloudCheck() {
+    if (!this.cloudConnected()) return;
+    try {
+      const at = await this.cloudReq('current/updatedAt');
+      const c = this.cloudState();
+      if (at && at > c.lastRemote) {
+        const dirty = this.cloudHash(JSON.stringify(this.cloudSnapshot())) !== c.lastHash;
+        this.cloudUi({ status: 'newer', remoteAt: at, dirty });
+      } else this.cloudSchedule();
+    } catch (e) { this.cloudUi({ status: 'error', error: this.cloudErr(e.message) }); }
+  }
+
+  async cloudDisconnect() {
+    clearTimeout(this._cloudTimer);
+    await this.cloudIdb('del');
+    this._cloudKey = null;
+    this.setCloud({ uid: '', refreshToken: '', idToken: '', expiresAt: 0, salt: '', lastRemote: 0, lastHash: '', lastSync: 0 });
+    this.setState({ cloudUi: {} });
+  }
+
+  cloudAgo(ms) {
+    if (!ms) return '';
+    const m = Math.floor((Date.now() - ms) / 60000);
+    return m < 1 ? 'الآن' : m < 60 ? 'قبل ' + (m === 1 ? 'دقيقة' : m === 2 ? 'دقيقتين' : m + (m <= 10 ? ' دقائق' : ' دقيقة')) : this.hijri(new Date(ms)) + ' ' + new Date(ms).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  cloudNavLabel() {
+    if (!this.cloudConnected()) return '☁ الحفظ في السحابة';
+    const u = this.state.cloudUi || {};
+    if (u.status === 'error' || u.status === 'conflict' || u.status === 'newer' || u.status === 'needKey') return '☁ السحابة — تحتاج انتباهك';
+    return '☁ السحابة: ' + (u.status === 'saving' ? 'جارٍ الحفظ…' : 'محفوظ ' + this.cloudAgo(this.cloudState().lastSync));
+  }
+
+  // شريط أعلى الصفحة عند وجود نسخة أحدث أو تعارض
+  cloudBanner() {
+    const R = React.createElement, u = this.state.cloudUi || {};
+    if (!this.cloudConnected() || (u.status !== 'newer' && u.status !== 'conflict' && u.status !== 'needKey')) return null;
+    const btn = (bg, fg, bd) => ({ background: bg, color: fg, border: bd ? '1px solid ' + bd : 'none', borderRadius: 99, minHeight: 38, padding: '0 14px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' });
+    const msg = u.status === 'needKey' ? 'هذا الجهاز مربوط بالسحابة لكن مفتاح التشفير غير موجود فيه. أدخل كلمة مرور السحابة من صفحة «الحفظ في السحابة».'
+      : 'توجد في السحابة نسخة أحدث (' + this.cloudAgo(u.remoteAt) + ') حُفظت من جهاز آخر.' + (u.dirty || u.status === 'conflict' ? ' وعلى هذا الجهاز تعديلات لم تُرفع؛ اختر أيّ النسختين تبقى.' : '');
+    return R('div', { 'data-cloud-banner': u.status, style: { background: '#fff8e6', border: '1px solid #ecd9a3', borderRadius: 16, padding: '12px 16px', marginBottom: 14, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' } },
+      R('span', { style: { flex: '1 1 260px', fontSize: 13, lineHeight: 1.8, color: '#6b5310', fontWeight: 700 } }, msg),
+      u.status === 'needKey' ? R('button', { type: 'button', style: btn('#15445a', '#fff'), onClick: () => this.setState({ section: 'cloud' }) }, 'فتح الإعداد') : R('button', { type: 'button', 'data-cloud-pull': '1', style: btn('#05623c', '#fff'), onClick: () => this.cloudPull() }, 'تحميل نسخة السحابة'),
+      u.status === 'needKey' ? null : R('button', { type: 'button', style: btn('#fff', '#8a2325', '#ecc5c5'), onClick: () => { if (window.confirm('سترفع نسخة هذا الجهاز وتحلّ محل نسخة السحابة الأحدث. تبقى نسخة السحابة السابقة في «النسخ اليومية». متابعة؟')) this.cloudUpload(true); } }, 'إبقاء نسخة هذا الجهاز'));
+  }
+
+  // نموذج الإعداد/الدخول (يُستخدم في صفحة السحابة وفي شاشة الدخول للاستعادة)
+  cloudForm(restoreOnly) {
+    const R = React.createElement, ink = '#15445a', c = this.cloudState(), u = Object.assign({ email: c.email || '', password: '', cfgText: '' }, this.state.cloudUi || {});
+    const input = { background: '#fff', border: '1px solid #d5d5d5', borderRadius: 12, padding: '10px 12px', fontSize: 13.5, fontFamily: 'inherit', color: '#22333a', width: '100%', boxSizing: 'border-box' };
+    const btn = (bg, fg, bd) => ({ background: bg, color: fg, border: bd ? '1px solid ' + bd : 'none', borderRadius: 99, minHeight: 42, padding: '0 18px', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: u.busy ? 'wait' : 'pointer', opacity: u.busy ? 0.7 : 1 });
+    const lab = t => R('span', { style: { fontSize: 12.5, fontWeight: 700, color: '#5c686d' } }, t);
+    const parts = [];
+    if (!c.apiKey || !c.dbUrl || u.editCfg) {
+      parts.push(R('label', { key: 'cfg', style: { display: 'flex', flexDirection: 'column', gap: 6 } }, lab('الصق إعدادات مشروع Firebase (firebaseConfig)'),
+        R('textarea', { value: u.cfgText, rows: 5, dir: 'ltr', 'data-cloud-cfg': '1', placeholder: 'const firebaseConfig = { apiKey: "AIza…", authDomain: "…", databaseURL: "https://…firebasedatabase.app", … };', onChange: e => this.cloudUi({ cfgText: e.target.value, error: '' }), style: Object.assign({}, input, { fontFamily: 'monospace', fontSize: 12 }) })));
+      parts.push(R('button', { key: 'cfgb', type: 'button', style: Object.assign(btn(ink, '#fff'), { alignSelf: 'flex-start' }), onClick: () => {
+        const p = this.cloudParseConfig(u.cfgText);
+        if (!p.apiKey) { this.cloudUi({ error: 'لم أجد apiKey في النص. انسخ كتلة firebaseConfig كاملة.' }); return; }
+        if (!p.dbUrl) { this.cloudUi({ error: 'لم أجد databaseURL. أنشئ Realtime Database أولًا (الخطوة 3)، ثم انسخ الإعدادات من جديد.' }); return; }
+        this.setCloud(p); this.cloudUi({ editCfg: false, error: '' });
+      } }, 'حفظ الإعدادات'));
+    } else {
+      parts.push(R('div', { key: 'cfgok', style: { fontSize: 12, color: '#05623c', fontWeight: 700, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } }, '✓ إعدادات المشروع محفوظة',
+        R('span', { dir: 'ltr', style: { color: '#7a868b', fontWeight: 400 } }, c.dbUrl.replace(/^https:\/\//, '')),
+        R('button', { type: 'button', style: { background: 'none', border: 'none', color: ink, textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12 }, onClick: () => this.cloudUi({ editCfg: true, cfgText: '' }) }, 'تغيير')));
+      parts.push(R('div', { key: 'cred', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 10 } },
+        R('label', { style: { display: 'flex', flexDirection: 'column', gap: 6 } }, lab('البريد الإلكتروني'), R('input', { type: 'email', dir: 'ltr', value: u.email, 'data-cloud-email': '1', onChange: e => this.cloudUi({ email: e.target.value, error: '' }), style: input })),
+        R('label', { style: { display: 'flex', flexDirection: 'column', gap: 6 } }, lab('كلمة مرور السحابة'), R('input', { type: 'password', dir: 'ltr', value: u.password, 'data-cloud-pass': '1', onChange: e => this.cloudUi({ password: e.target.value, error: '' }), style: input }))));
+      parts.push(R('div', { key: 'warn', style: { fontSize: 12, color: '#8a5a00', lineHeight: 1.8, background: '#fff8e6', borderRadius: 10, padding: '8px 12px' } },
+        'هذه الكلمة تقفل بياناتك المشفّرة. احفظها في مكان آمن؛ إن نسيتها لا يمكن لأحد فتح نسخة السحابة (تبقى البيانات الموجودة على أجهزتك).'));
+      parts.push(R('div', { key: 'btns', style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+        R('button', { type: 'button', 'data-cloud-signin': '1', disabled: !!u.busy, style: btn('#05623c', '#fff'), onClick: () => (restoreOnly ? this.cloudRestoreFromAuth() : this.cloudConnect('signin')) }, u.busy ? 'جارٍ الاتصال…' : restoreOnly ? 'استعادة بياناتي' : 'تسجيل الدخول'),
+        restoreOnly ? null : R('button', { type: 'button', 'data-cloud-signup': '1', disabled: !!u.busy, style: btn('#fff', ink, ink), onClick: () => this.cloudConnect('signup') }, 'إنشاء حساب جديد')));
+    }
+    if (u.error) parts.push(R('div', { key: 'err', role: 'alert', 'data-cloud-error': '1', style: { color: '#8a2325', fontSize: 13, fontWeight: 700, lineHeight: 1.8 } }, u.error));
+    return R('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } }, parts);
+  }
+
+  // من شاشة الدخول على جهاز جديد: دخول الحساب ← تنزيل ← فك التشفير ← كتابة البيانات ← إعادة التحميل
+  async cloudRestoreFromAuth() {
+    const u = Object.assign({ email: '', password: '' }, this.state.cloudUi || {}), cfg = this.cloudState();
+    if (!u.email.trim() || !u.password) { this.cloudUi({ error: 'اكتب البريد وكلمة المرور.' }); return; }
+    this.cloudUi({ busy: true, error: '' });
+    try {
+      const auth = Object.assign({ apiKey: cfg.apiKey, dbUrl: cfg.dbUrl }, await this.cloudAuth('signin', u.email.trim(), u.password, cfg));
+      const remote = await this.cloudReq('current', 'GET', null, auth);
+      if (!remote || !remote.data) { this.cloudUi({ busy: false, error: 'لا توجد بيانات محفوظة في هذا الحساب بعد.' }); return; }
+      const key = await this.cloudDeriveKey(u.password, remote.salt);
+      const snap = await this.cloudDecrypt(remote, key);
+      await this.cloudIdb('put', key);
+      this._cloudKey = key;
+      this.cloudApply(snap, remote, { email: auth.email, uid: auth.uid, idToken: auth.idToken, refreshToken: auth.refreshToken, expiresAt: auth.expiresAt, salt: remote.salt });
+    } catch (e) { this.cloudUi({ busy: false, error: this.cloudErr(e.message) }); }
+  }
+
+  cloudAuthPanel() {
+    const R = React.createElement, u = this.state.cloudUi || {};
+    if (!u.authOpen) return R('button', { type: 'button', 'data-cloud-auth-open': '1', onClick: () => this.cloudUi({ authOpen: true, error: '' }),
+      style: { marginTop: 14, background: 'none', border: 'none', color: '#15445a', fontWeight: 700, fontSize: 13, textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'center' } },
+      '☁ لديك بيانات محفوظة في السحابة؟ استعدها على هذا الجهاز');
+    return R('div', { 'data-cloud-auth': '1', style: { marginTop: 16, border: '1px solid #cfe0e6', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'start' } },
+      R('b', { style: { color: '#15445a', fontSize: 14 } }, 'استعادة بياناتك من السحابة'),
+      R('span', { style: { fontSize: 12.5, color: '#5c686d', lineHeight: 1.8 } }, 'بعد الاستعادة تفتح المنصة بكلمة مرورها المعتادة نفسها التي أنشأتها على جهازك الأول.'),
+      this.cloudForm(true),
+      R('button', { type: 'button', onClick: () => this.cloudUi({ authOpen: false, error: '' }), style: { background: 'none', border: 'none', color: '#5c686d', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5, alignSelf: 'flex-start' } }, 'إلغاء'));
+  }
+
+  // صفحة «الحفظ في السحابة»
+  cloudView() {
+    const R = React.createElement, ink = '#15445a', c = this.cloudState(), u = this.state.cloudUi || {};
+    const btn = (bg, fg, bd) => ({ background: bg, color: fg, border: bd ? '1px solid ' + bd : 'none', borderRadius: 99, minHeight: 42, padding: '0 18px', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' });
+    const card = (kids, extra) => R('div', { style: Object.assign({ background: '#fff', boxShadow: '0 6px 20px rgba(0,56,69,.10)', borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }, extra || {}) }, kids);
+    const step = (n, title, lines) => R('div', { key: n, style: { display: 'flex', gap: 12, alignItems: 'flex-start' } },
+      R('span', { style: { flex: '0 0 auto', width: 28, height: 28, borderRadius: 99, background: ink, color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 } }, n),
+      R('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 } }, R('b', { style: { color: ink, fontSize: 14 } }, title),
+        lines.map((l, i) => R('span', { key: i, style: { fontSize: 13, lineHeight: 1.9, color: '#3d4a50' } }, l))));
+    const guide = card([
+      R('b', { key: 'h', style: { fontSize: 16, color: ink } }, 'إعداد السحابة مرة واحدة (نحو 10 دقائق)'),
+      step('1', 'إنشاء المشروع', ['افتح console.firebase.google.com وسجّل الدخول بحساب Google.', 'اضغط Create a project (إنشاء مشروع)، واكتب اسمًا مثل tamheed، وأوقف Google Analytics، ثم Create project.']),
+      step('2', 'تفعيل الدخول بالبريد', ['من القائمة: Build (إنشاء) ← Authentication ← Get started (البدء).', 'اختر Email/Password (البريد وكلمة المرور) ← Enable (تفعيل) ← Save (حفظ).']),
+      step('3', 'إنشاء قاعدة البيانات وقواعد الحماية', ['من القائمة: Build ← Realtime Database ← Create Database (إنشاء قاعدة بيانات).', 'اختر الموقع Belgium (europe-west1) — الأقرب للمملكة — ثم Start in locked mode (الوضع المقفل) ← Enable.', 'افتح تبويب Rules (القواعد)، واحذف ما فيه، والصق القواعد التالية ثم اضغط Publish (نشر):']),
+      R('div', { key: 'rules', style: { position: 'relative' } },
+        R('pre', { dir: 'ltr', style: { margin: 0, background: '#0f2a36', color: '#d7f3ea', borderRadius: 12, padding: '12px 14px', fontSize: 12, lineHeight: 1.6, overflowX: 'auto', textAlign: 'left' } }, this.CLOUD_RULES),
+        R('button', { type: 'button', style: Object.assign(btn('#fff', ink, ink), { position: 'absolute', top: 8, left: 8, minHeight: 32, padding: '0 12px', fontSize: 12 }), onClick: () => { try { navigator.clipboard.writeText(this.CLOUD_RULES); } catch (e) {} this.cloudUi({ rulesCopied: true }); setTimeout(() => this.cloudUi({ rulesCopied: false }), 2000); } },
+          u.rulesCopied ? 'تم النسخ ✓' : 'نسخ القواعد')),
+      step('4', 'نسخ إعدادات المشروع', ['اضغط رمز الترس ⚙ ← Project settings (إعدادات المشروع) ← في أسفل الصفحة Your apps ← رمز الويب </>.', 'اكتب اسمًا مثل tamheed-web ← Register app (تسجيل التطبيق)، ثم انسخ كتلة const firebaseConfig = {…} كاملة والصقها هنا:']),
+      this.cloudForm(false)
+    ]);
+    if (!this.cloudConnected() && !u.choice) return R('div', { 'data-cloud-view': '1', style: { display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 820 } },
+      card([R('span', { key: 't', style: { fontSize: 13.5, lineHeight: 2, color: '#22333a' } },
+        'اربط المنصة بحسابك في Firebase (مجاني من Google) لتُحفظ بياناتك تلقائيًا وتفتحها من أي جهاز: الكمبيوتر أو الجوال. تُشفَّر البيانات على جهازك بكلمة مرور حسابك قبل رفعها، فلا تراها Google ولا غيرها. ',
+        R('b', null, 'الخوادم المجانية خارج المملكة، فيُستحسن إبلاغ مدير المدرسة قبل التفعيل.'))]),
+      guide);
+    if (u.choice) {
+      const p = u.choice.payload;
+      return R('div', { 'data-cloud-view': '1', style: { display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 820 } }, card([
+        R('b', { key: 'h', style: { fontSize: 16, color: ink } }, 'توجد بيانات في حسابك على السحابة'),
+        R('span', { key: 's', style: { fontSize: 13.5, lineHeight: 2, color: '#22333a' } }, 'حُفظت ' + this.cloudAgo(p.updatedAt) + ' من ' + (p.device || 'جهاز') + '. أيّ النسختين تريد أن تبقى؟'),
+        R('div', { key: 'b', style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+          R('button', { type: 'button', 'data-cloud-use-remote': '1', style: btn('#05623c', '#fff'), onClick: () => this.cloudApply(u.choice.snap, p) }, 'استخدام بيانات السحابة على هذا الجهاز'),
+          R('button', { type: 'button', 'data-cloud-use-local': '1', style: btn('#fff', '#8a2325', '#ecc5c5'), onClick: () => { if (window.confirm('سترفع بيانات هذا الجهاز وتحلّ محل بيانات السحابة. تبقى نسخ السحابة السابقة في «النسخ اليومية». متابعة؟')) { this.cloudUi({ choice: null }); this.cloudUpload(true); } } }, 'رفع بيانات هذا الجهاز بدلًا منها'))
+      ]));
+    }
+    const status = u.status === 'saving' ? 'جارٍ الحفظ…' : u.status === 'error' ? 'تعذّر الحفظ' : 'محفوظة';
+    return R('div', { 'data-cloud-view': '1', style: { display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 820 } },
+      card([
+        R('div', { key: 'st', style: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' } },
+          R('span', { style: { fontSize: 30 } }, '☁'),
+          R('div', { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
+            R('b', { 'data-cloud-status': u.status || 'ok', style: { fontSize: 16, color: u.status === 'error' ? '#8a2325' : '#05623c' } }, 'بياناتك ' + status + ' في السحابة'),
+            R('span', { style: { fontSize: 12.5, color: '#5c686d' } }, 'الحساب: ' + c.email + (c.lastSync ? ' — آخر حفظ ' + this.cloudAgo(c.lastSync) : '')))),
+        u.error ? R('div', { key: 'e', role: 'alert', style: { color: '#8a2325', fontSize: 13, fontWeight: 700, lineHeight: 1.8 } }, u.error) : null,
+        u.status === 'needKey' ? R('div', { key: 'nk', style: { display: 'flex', flexDirection: 'column', gap: 8 } }, R('b', { style: { color: '#8a5a00', fontSize: 13.5 } }, 'أدخل كلمة مرور السحابة لإعادة تفعيل الحفظ على هذا الجهاز'), this.cloudForm(false)) : null,
+        R('span', { key: 'how', style: { fontSize: 13, lineHeight: 1.9, color: '#3d4a50' } }, 'يُحفظ كل تعديل تلقائيًا بعد ثوانٍ، مشفّرًا. على جهاز آخر: افتح المنصة، ومن شاشة الدخول اضغط «استعادة من السحابة»، ثم ادخل بكلمة مرور المنصة المعتادة. وتُحفظ نسخة لكل يوم تستطيع الرجوع إليها.'),
+        R('div', { key: 'b', style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+          R('button', { type: 'button', 'data-cloud-upload': '1', style: btn('#05623c', '#fff'), onClick: () => this.cloudUpload(true) }, 'حفظ الآن'),
+          R('button', { type: 'button', style: btn('#fff', ink, ink), onClick: () => { if (window.confirm('ستحلّ نسخة السحابة محل بيانات هذا الجهاز. متابعة؟')) this.cloudPull(); } }, 'تحميل نسخة السحابة'),
+          R('button', { type: 'button', style: btn('#fff', ink, ink), onClick: () => this.cloudDays() }, 'النسخ اليومية'),
+          R('button', { type: 'button', style: btn('#fff', '#8a2325', '#ecc5c5'), onClick: () => { if (window.confirm('قطع ربط هذا الجهاز بالسحابة؟ تبقى البيانات على الجهاز وفي السحابة.')) this.cloudDisconnect(); } }, 'قطع الربط على هذا الجهاز')),
+        (u.days || []).length ? R('div', { key: 'd', style: { display: 'flex', gap: 6, flexWrap: 'wrap' } }, u.days.map(d => R('button', { key: d, type: 'button', style: Object.assign(btn('#f6f9fa', ink, '#d5dadc'), { minHeight: 34, fontSize: 12 }),
+          onClick: () => { if (window.confirm('استعادة نسخة يوم ' + this.dayHijri(d) + '؟ ستحلّ محل بيانات هذا الجهاز.')) this.cloudPull(d); } }, this.dayHijri(d)))) : null
+      ]));
   }
 
   // ===== إضافات سَنَد: مواعيد المتابعة، وفرص التعويض، وتوصيات اللجنة، والتقرير الفصلي =====
@@ -7964,7 +8367,8 @@ class Component extends DCLogic {
       weekly: ['بين الأسرة والمدرسة — أسبوعًا بأسبوع', 'استمارة المتابعة الأسبوعية'],
       referral: ['النموذج المعتمد أو استمارة المعلم الموسّعة', 'إحالة طالب'],
       casestudy: ['مسوّدة سرية على جهازك — التوثيق الرسمي في نظام نور', 'استمارة دراسة حالة'],
-      about: ['وثيقة تعريفية', 'عن منصة تمهيد']
+      about: ['وثيقة تعريفية', 'عن منصة تمهيد'],
+      cloud: ['بياناتك على كل أجهزتك — مشفّرة بكلمة مرورك', 'الحفظ في السحابة']
     };
 
     let fields = [];
@@ -8068,6 +8472,12 @@ class Component extends DCLogic {
       consentStamp: s.consentDate ? 'أُقِرّت سياسة الاستخدام في ' + s.consentDate : '',
       hasConsentStamp: !!s.consentDate,
       onExportData: () => this.exportData(),
+      goCloud: () => { this.setState({ section: 'cloud', menuOpen: false }); this.scrollTopOnPhone(); },
+      cloudNavLabel: this.cloudNavLabel(),
+      cloudAuthPanel: s.user ? null : this.cloudAuthPanel(),
+      cloudBanner: s.user ? this.cloudBanner() : null,
+      isCloud: s.section === 'cloud',
+      cloudView: s.section === 'cloud' ? this.cloudView() : null,
       onImportData: ev => this.importData(ev),
       dataNotice: s.dataNotice,
       hasDataNotice: !!s.dataNotice,
